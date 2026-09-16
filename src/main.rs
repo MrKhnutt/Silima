@@ -14,12 +14,12 @@ async fn main() {
 
     //update ip later
     let addr = "127.0.0.1";
-    let port = "3000";
+    let port = "42699";
     let listener = TcpListener::bind(format!("{addr}:{port}"))
         .await
         .unwrap();
 
-    println!(format!("Listening on ws://{addr}:{port}/ws"));
+    println!("{}", format!("Listening on ws://{addr}:{port}/ws"));
 
     axum::serve(listener, app)
         .await
