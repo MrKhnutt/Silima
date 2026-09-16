@@ -12,9 +12,15 @@ use axum::{
 use tokio::net::TcpListener;    // user input
 use tokio::net::UdpSocket;      // server output
 use tokio::sync::mpsc;          // miso queue for anarchy
-use tower_http::services::ServeDir; // servicing for client
 use tokio::time::interval;
+
+use tower_http::services::ServeDir; // servicing for client
+
 use local_ip_address::local_ip;
+
+use std::collections::HashMap;
+
+use rand::seq::IteratorRandom;
 
 #[tokio::main] // miso framework
 
@@ -86,81 +92,73 @@ async fn handle_ra(
     udpAddress: String,
     mut rx: tokio::sync::mpsc::Receiver<String>
 ) {
-    while let Some(message) = rx.recv().await {
-        println!("Consuming {}", message);
 
-        let id: i32 = match message.as_str() {
-            "A" => 8,
-            "B" => 0,
-            "X" => 9,
-            "Y" => 1,
-            "START" => 3,
-            "SELECT" => 2,
+    const VOTING_PERIOD: u64 = 2000;
+    let mut inputVote = HashMap::new();
+    let mut interval = tokio::time::interval(Duration::from_millis(VOTING_PERIOD));
 
-            "UP" => 4,
-            "DOWN" => 5,
-            "LEFT" => 6,
-            "RIGHT" => 7,
 
-            "L" => 10,
-            "R" => 11,
+    loop {
+        tokio::select! {
+            message = rx.recv() => {
+                if let Some(message) = message {
+                    // println!("Consuming {}", message);
 
-            _ => continue,
-        };
+                    let id: i32 = match message.as_str() {
+                        "A" => 8,
+                        "B" => 0,
+                        "X" => 9,
+                        "Y" => 1,
+                        
+                        "START" => 3,
+                        "SELECT" => 2,
 
-        // Button down
-        let press = ra_packet(id, 1);
-        let _ = udp.send_to(&press, &udpAddress).await;
-        
-        tokio::time::sleep(Duration::from_millis(100)).await;
+                        "UP" => 4,
+                        "DOWN" => 5,
+                        "LEFT" => 6,
+                        "RIGHT" => 7,
 
-        // Button up
-        let release = ra_packet(id, 0);
-        let _ = udp.send_to(&release, &udpAddress).await;
+                        "L" => 10,
+                        "R" => 11,
 
-        println!("Sent {} to {}", message, udpAddress);
+                        _ => -1,
+                    };
+
+                    *inputVote.entry(id).or_insert(0) += 1;
+                    
+                    println!("input recieved");
+                }
+            },
+            _ = interval.tick() => {
+                match inputVote.iter().max_by_key(|&n| n) {
+                    Some((_,_)) => {
+                        let maxCount = inputVote.values().max().copied();
+                        let winner = {
+                            let mut rng = rand::rng();
+
+                            inputVote.iter()
+                                .filter(|(_,count)| Some(**count) == maxCount)
+                                .choose(&mut rng)
+                                .map(|(id, count)| (*id, *count))
+                        };
+                        match winner {
+                                Some((id,count)) => {
+                                    println!("Voted {} at {} times", id, count);
+                                    let _ = udp.send_to(&ra_packet(id, 1), &udpAddress).await;
+                                    tokio::time::sleep(Duration::from_millis(100)).await;
+                                    let _ = udp.send_to(&ra_packet(id, 0), &udpAddress).await;
+                                }
+                                None => {
+                                    println!("No action selected, idling");
+                            }
+                        };
+                        inputVote.clear();
+                    } None => {
+                        println!("No action selected, panic?");
+                    }
+            }}}
     }
 }
-
-// async fn handle_ra(udp : UdpSocket, udpAddress : String, mut rx : tokio::sync::mpsc:: Receiver<String>) {
-
-//     // let mut interval = tokio::time::interval(Duration::from_millis(16));
-
-//     while let Some(message) = rx.recv().await {
-
-//         println!("Consuming {}", message.as_str());
-
-//         let bit: u16 = 1 << match message.as_str() {
-//             "A" => 8,
-//             "B" => 0,
-//             "X" => 9,
-//             "Y" => 1,
-//             "START" => 3,
-//             "SELECT" => 2,
-
-//             "UP" => 4,
-//             "DOWN" => 5,
-//             "LEFT" => 6,
-//             "RIGHT" => 7,
-
-//             "L" => 10,
-//             "R" => 11,
-
-//             _ => 12,
-//         };
-
-//         // interval.tick().await;
-//         // for _ in 0..7 {
-//             let _ = udp.send_to(bit.to_string().as_bytes(),udpAddress.clone() ).await;
-//             // interval.tick().await;
-//         // }
-//         // let _ = udp.send_to(0.to_string().as_bytes(),udpAddress.clone() ).await;
-    
-//         println!("Talking to {}", udpAddress);
-//     };
-
-    // Ok(())
-// }
 
 async fn handle_socket(mut socket: WebSocket, tx: tokio::sync::mpsc::Sender<String>) {
     println!("Client connected");
