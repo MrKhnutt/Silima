@@ -39,7 +39,6 @@ async fn main() {
             }))
             .fallback_service(ServeDir::new("static"));
 
-    //update ip later
     let addr = "0.0.0.0";
     let port = "42699";
     let listener = TcpListener::bind(format!("{addr}:{port}"))
@@ -100,16 +99,16 @@ async fn handle_ra(
 
     loop {
         tokio::select! {
+            // input recieved
             message = rx.recv() => {
+                // map to bid for controller
                 if let Some(message) = message {
-                    // println!("Consuming {}", message);
-
                     let id: i32 = match message.as_str() {
                         "A" => 8,
                         "B" => 0,
                         "X" => 9,
                         "Y" => 1,
-                        
+
                         "START" => 3,
                         "SELECT" => 2,
 
@@ -125,13 +124,15 @@ async fn handle_ra(
                     };
 
                     *inputVote.entry(id).or_insert(0) += 1;
-                    
-                    println!("input recieved");
-                }
-            },
+                    // println!("input recieved");
+            }},
+            // voting period comes due
             _ = interval.tick() => {
+                //optimize this TODO
                 match inputVote.iter().max_by_key(|&n| n) {
+                    // return is valid
                     Some((_,_)) => {
+                        // clone to preserve future
                         let maxCount = inputVote.values().max().copied();
                         let winner = {
                             let mut rng = rand::rng();
@@ -141,18 +142,23 @@ async fn handle_ra(
                                 .choose(&mut rng)
                                 .map(|(id, count)| (*id, *count))
                         };
+                        // clear history here to preserve future
+                        inputVote.clear();
+                        // future in peril due to await
                         match winner {
+                                // input recieved
                                 Some((id,count)) => {
                                     println!("Voted {} at {} times", id, count);
-                                    let _ = udp.send_to(&ra_packet(id, 1), &udpAddress).await;
-                                    tokio::time::sleep(Duration::from_millis(100)).await;
-                                    let _ = udp.send_to(&ra_packet(id, 0), &udpAddress).await;
+                                    // ra_packet builds the byte collection through shifting to send via UDP
+                                    let _ = udp.send_to(&ra_packet(id, 1), &udpAddress).await;  // press
+                                    tokio::time::sleep(Duration::from_millis(VOTING_PERIOD / 2)).await;
+                                    let _ = udp.send_to(&ra_packet(id, 0), &udpAddress).await;  // unpress
                                 }
+                                // no button press
                                 None => {
                                     println!("No action selected, idling");
                             }
                         };
-                        inputVote.clear();
                     } None => {
                         println!("No action selected, panic?");
                     }
