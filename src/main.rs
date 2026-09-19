@@ -1,7 +1,5 @@
 #![allow(non_snake_case)]
 
-use std::time::Duration;
-
 // dependencies
 use axum::{
     extract::ws::{Message, WebSocket, WebSocketUpgrade},
@@ -9,18 +7,18 @@ use axum::{
     routing::any,
     Router,
 };
-use tokio::net::TcpListener;    // user input
-use tokio::net::UdpSocket;      // server output
-use tokio::sync::mpsc;          // miso queue for anarchy
-use tokio::time::interval;
-
-use tower_http::services::ServeDir; // servicing for client
-
-use local_ip_address::local_ip;
-
-use std::collections::HashMap;
-
+use tokio::{
+    net::{TcpListener, UdpSocket},
+    sync::mpsc,
+    time,
+};
+use std::{
+    collections::HashMap,
+    time::Duration,
+};
 use rand::seq::IteratorRandom;
+use local_ip_address::local_ip;
+use tower_http::services::ServeDir; // servicing for client
 
 #[tokio::main] // miso framework
 
@@ -53,7 +51,10 @@ async fn main() {
     println!("{}", format!("Talking on {raAddr}:0"));
 
     tokio::spawn(async move {
-        handle_ra(UdpSocket::bind(format!("{raAddr}:0")).await.expect("failed to bind UDP socket"), format!("{raAddr}:{raPort}"), anaRx).await
+        handle_ra(
+            UdpSocket::bind(format!("{raAddr}:0")).await.expect("failed to bind UDP socket"), 
+            format!("{raAddr}:{raPort}"), anaRx
+        ).await
     });
 
     axum::serve(listener, app)
@@ -61,7 +62,7 @@ async fn main() {
         .unwrap();
 }
 
-async fn websocket_handler(ws: WebSocketUpgrade, tx: tokio::sync::mpsc::Sender<String>) -> Response {
+async fn websocket_handler(ws: WebSocketUpgrade, tx: mpsc::Sender<String>) -> Response {
     // HTTP request
     ws.on_upgrade(move |ws : WebSocket| {
         handle_socket(ws, tx.clone())
@@ -89,12 +90,12 @@ fn ra_packet(id: i32, state: u16) -> [u8; 20] {
 async fn handle_ra(
     udp: UdpSocket,
     udpAddress: String,
-    mut rx: tokio::sync::mpsc::Receiver<String>
+    mut rx: mpsc::Receiver<String>
 ) {
-
+    const MS_PER_FRAME: u64 = 17;
     const VOTING_PERIOD: u64 = 2000;
     let mut inputVote = HashMap::new();
-    let mut interval = tokio::time::interval(Duration::from_millis(VOTING_PERIOD));
+    let mut interval = time::interval(Duration::from_millis(VOTING_PERIOD));
 
 
     loop {
@@ -124,7 +125,7 @@ async fn handle_ra(
                     };
 
                     *inputVote.entry(id).or_insert(0) += 1;
-                    // println!("input recieved");
+                    // println!("input received");
             }},
             // voting period comes due
             _ = interval.tick() => {
@@ -151,7 +152,7 @@ async fn handle_ra(
                                     println!("Voted {} at {} times", id, count);
                                     // ra_packet builds the byte collection through shifting to send via UDP
                                     let _ = udp.send_to(&ra_packet(id, 1), &udpAddress).await;  // press
-                                    tokio::time::sleep(Duration::from_millis(VOTING_PERIOD / 2)).await;
+                                    time::sleep(Duration::from_millis(MS_PER_FRAME)).await;
                                     let _ = udp.send_to(&ra_packet(id, 0), &udpAddress).await;  // unpress
                                 }
                                 // no button press
@@ -166,7 +167,10 @@ async fn handle_ra(
     }
 }
 
-async fn handle_socket(mut socket: WebSocket, tx: tokio::sync::mpsc::Sender<String>) {
+async fn handle_socket(
+    mut socket: WebSocket, 
+    tx: mpsc::Sender<String>
+){
     println!("Client connected");
 
     while let Some(result) = socket.recv().await {
