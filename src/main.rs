@@ -87,6 +87,8 @@ async fn handle_ra(
     udpAddress: String,
     mut rx: mpsc::Receiver<String>
 ) {
+    const MS_PER_FRAME: u64 = 17;
+
     while let Some(message) = rx.recv().await {
         println!("Consuming {}", message);
 
@@ -113,7 +115,7 @@ async fn handle_ra(
         let press = ra_packet(id, 1);
         let _ = udp.send_to(&press, &udpAddress).await;
         
-        time::sleep(Duration::from_millis(100)).await;
+        time::sleep(Duration::from_millis(MS_PER_FRAME)).await;
 
         // Button up
         let release = ra_packet(id, 0);
