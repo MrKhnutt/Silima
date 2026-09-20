@@ -9,16 +9,18 @@ use axum::{
 };
 use tokio::{
     net::{TcpListener, UdpSocket},
-    sync::mpsc,
+    sync::{mpsc, watch},
     time,
 };
 use std::{
     collections::HashMap,
     time::Duration,
 };
+use serde_json::{json, Value};
 use rand::seq::IteratorRandom;
 use local_ip_address::local_ip;
 use tower_http::services::ServeDir; // servicing for client
+use futures_util::{SinkExt, StreamExt};
 
 #[tokio::main] // miso framework
 
@@ -28,12 +30,21 @@ async fn main() {
     println!("Students connect to http://{localIp}:42699");
 
     let (anaTx, anaRx) = mpsc::channel(32);
+    let (pollTx, _pollRx) = watch::channel(Value::Null);
     // T is send, R is receive
+
+    let test = json!({
+        "type" : "vote_update",
+        "votes": {
+            "A" : 1,
+        }
+    });
+    _ = pollTx.send(test);
 
     let app =
         Router::new()
             .route("/ws", any(move |wsu: WebSocketUpgrade| {
-                websocket_handler(wsu, anaTx.clone())
+                websocket_handler(wsu, anaTx.clone(), pollTx.clone())
             }))
             .fallback_service(ServeDir::new("static"));
 
@@ -62,10 +73,18 @@ async fn main() {
         .unwrap();
 }
 
-async fn websocket_handler(ws: WebSocketUpgrade, tx: mpsc::Sender<String>) -> Response {
+async fn websocket_handler(
+    ws: WebSocketUpgrade, 
+    tx: mpsc::Sender<String>,
+    pollTx: watch::Sender<Value>
+) -> Response {
     // HTTP request
-    ws.on_upgrade(move |ws : WebSocket| {
-        handle_socket(ws, tx.clone())
+    ws.on_upgrade(move |ws: WebSocket| {
+        handle_client(
+            ws, 
+            tx.clone(), 
+            pollTx.subscribe()
+        )
     })
 }
 
@@ -100,7 +119,7 @@ async fn handle_ra(
 
     loop {
         tokio::select! {
-            // input recieved
+            // input received
             message = rx.recv() => {
                 // map to bid for controller
                 if let Some(message) = message {
@@ -147,7 +166,7 @@ async fn handle_ra(
                         inputVote.clear();
                         // future in peril due to await
                         match winner {
-                                // input recieved
+                                // input received
                                 Some((id,count)) => {
                                     println!("Voted {} at {} times", id, count);
                                     // ra_packet builds the byte collection through shifting to send via UDP
@@ -167,40 +186,64 @@ async fn handle_ra(
     }
 }
 
-async fn handle_socket(
-    mut socket: WebSocket, 
-    tx: mpsc::Sender<String>
+// async fn democracy_poll_send(
+//     mut socket: WebSocket,
+//     rx: watch::Receiver<Value>
+// ) {
+
+// }
+
+async fn handle_client(
+    socket: WebSocket, 
+    tx: mpsc::Sender<String>,
+    mut rx: watch::Receiver<Value>
 ){
     println!("Client connected");
 
-    while let Some(result) = socket.recv().await {
-        match result {
-            Ok(Message::Text(text)) => {
-                
-                println!("Received: {text}");
-                let _ = tx.send(text.to_string()).await;  // sends to buffer
+    let (
+        mut wsSender, // Messages FROM the student
+        mut wsReceiver    // Messages going TO the student
+    ) = socket.split();
 
-                // send response, else panic
-                socket
-                    .send(Message::Text(
-                        format!("Server received: {text}").into()
-                    ))
-                    .await
-                    .unwrap();
-            }
+    loop{ tokio::select! {
+        Some(result) = wsReceiver.next() => {
+            match result {
+                Ok(Message::Text(text)) => {
+                    
+                    println!("Received: {text}");
+                    let _ = tx.send(text.to_string()).await;  // sends to buffer
 
-            Ok(Message::Close(_)) => {
-                println!("Client disconnected");
-                break;
-            }
+                    // send response, else panic
+                    wsSender
+                        .send(Message::Text(
+                            format!("Server received: {text}").into()
+                        ))
+                        .await
+                        .unwrap();
+                }
 
-            // Any other result
-            Ok(_) => {}
+                Ok(Message::Close(_)) => {
+                    println!("Client disconnected");
+                    break;
+                }
 
-            Err(error) => {
-                println!("WebSocket error: {error}");
-                break;
+                // Any other result
+                Ok(_) => {}
+
+                Err(error) => {
+                    println!("WebSocket error: {error}");
+                    break;
+                }
             }
         }
-    }
+        _ = rx.changed() => {
+
+            // update to send json stats
+            wsSender.send(Message::Text(
+                "Poll Update".into()
+            ))
+            .await
+            .unwrap();
+        }
+    }}
 }
