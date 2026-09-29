@@ -769,9 +769,11 @@ name = "project-silima"
 version = "0.1.0"
 dependencies = [
  "axum",
+ "futures-util",
  "local-ip-address",
  "mpsc",
  "rand 0.10.2",
+ "serde_json",
  "tokio",
  "tower-http",
 ]
