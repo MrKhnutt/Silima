@@ -1,23 +1,14 @@
+#![allow(non_snake_case)]
+
 // dependencies
 use axum::{
     extract::ws::{Message, WebSocket, WebSocketUpgrade},
     response::Response,
-    routing::any,
-    Router,
 };
 use tokio::{
-    net::{TcpListener, UdpSocket},
     sync::{mpsc, watch},
-    time,
 };
-use std::{
-    collections::HashMap,
-    time::Duration,
-};
-use serde_json::{json, Value};
-use rand::seq::IteratorRandom;
-use local_ip_address::local_ip;
-use tower_http::services::ServeDir; // servicing for client
+use serde_json::{Value};
 use futures_util::{SinkExt, StreamExt};
 
 pub async fn websocket_handler(

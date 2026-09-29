@@ -1,25 +1,16 @@
+#![allow(non_snake_case)]
+
 // dependencies
-use axum::{
-    extract::ws::{Message, WebSocket, WebSocketUpgrade},
-    response::Response,
-    routing::any,
-    Router,
-};
 use tokio::{
-    net::{TcpListener, UdpSocket},
-    sync::{mpsc, watch},
     time,
+    net::UdpSocket,
+    sync::mpsc,
 };
 use std::{
     collections::HashMap,
     time::Duration,
 };
-use serde_json::{json, Value};
 use rand::seq::IteratorRandom;
-use local_ip_address::local_ip;
-use tower_http::services::ServeDir; // servicing for client
-use futures_util::{SinkExt, StreamExt};
-
 
 fn ra_packet(id: i32, state: u16) -> [u8; 20] {
     let mut packet = [0u8; 20];
