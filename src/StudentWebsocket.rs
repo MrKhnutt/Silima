@@ -14,14 +14,14 @@ use futures_util::{SinkExt, StreamExt};
 pub async fn websocket_handler(
     ws: WebSocketUpgrade, 
     tx: mpsc::Sender<String>,
-    pollTx: watch::Sender<Value>
+    pollTx: watch::Receiver<Value>
 ) -> Response {
     // HTTP request
     ws.on_upgrade(move |ws: WebSocket| {
         handle_client(
             ws, 
             tx.clone(), 
-            pollTx.subscribe()
+            pollTx.clone()
         )
     })
 }

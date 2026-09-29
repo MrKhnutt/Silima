@@ -2,15 +2,14 @@
 
 // dependencies
 use tokio::{
-    time,
-    net::UdpSocket,
-    sync::mpsc,
+    net::UdpSocket, sync::{mpsc, watch}, time,
 };
 use std::{
     collections::HashMap,
     time::Duration,
 };
 use rand::seq::IteratorRandom;
+use serde_json::{Value};
 
 fn ra_packet(id: i32, state: u16) -> [u8; 20] {
     let mut packet = [0u8; 20];
@@ -30,16 +29,23 @@ fn ra_packet(id: i32, state: u16) -> [u8; 20] {
     packet
 }
 
-pub async fn handle_ra(
+pub async fn handleRaDemocracy(
     udp: UdpSocket,
     udpAddress: String,
-    mut rx: mpsc::Receiver<String>
+    mut rx: mpsc::Receiver<String>,
+    pollWatch: watch::Sender<Value>
 ) {
     const MS_PER_FRAME: u64 = 17;
     const VOTING_PERIOD: u64 = 2000;
     let mut inputVote = HashMap::new();
     let mut interval = time::interval(Duration::from_millis(VOTING_PERIOD));
 
+    let test: Value = serde_json::json!({
+        "type" : "vote_update",
+        "votes": {
+            "A" : 1,
+        }
+    });
 
     loop {
         tokio::select! {
@@ -93,6 +99,8 @@ pub async fn handle_ra(
                                 // input received
                                 Some((id,count)) => {
                                     println!("Voted {} at {} times", id, count);
+                                    // polling reporting
+                                    _ = pollWatch.send(test.clone());
                                     // ra_packet builds the byte collection through shifting to send via UDP
                                     let _ = udp.send_to(&ra_packet(id, 1), &udpAddress).await;  // press
                                     time::sleep(Duration::from_millis(MS_PER_FRAME)).await;

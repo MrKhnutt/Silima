@@ -24,7 +24,7 @@ async fn main() {
     println!("Students connect to http://{localIp}:42699");
 
     let (anaTx, anaRx) = mpsc::channel(32);
-    let (pollTx, _pollRx) = watch::channel(Value::Null);
+    let (pollTx, pollRx) = watch::channel(Value::Null);
     // T is send, R is receive
 
     let test = json!({
@@ -38,7 +38,7 @@ async fn main() {
     let app =
         Router::new()
             .route("/ws", any(move |wsu: WebSocketUpgrade| {
-                StudentWebsocket::websocket_handler(wsu, anaTx.clone(), pollTx.clone())
+                StudentWebsocket::websocket_handler(wsu, anaTx.clone(), pollRx.clone())
             }))
             .fallback_service(ServeDir::new("static"));
 
@@ -56,9 +56,9 @@ async fn main() {
     println!("{}", format!("Talking on {raAddr}:0"));
 
     tokio::spawn(async move {
-        RetroArchHandler::handle_ra(
+        RetroArchHandler::handleRaDemocracy(
             UdpSocket::bind(format!("{raAddr}:0")).await.expect("failed to bind UDP socket"), 
-            format!("{raAddr}:{raPort}"), anaRx
+            format!("{raAddr}:{raPort}"), anaRx, pollTx
         ).await
     });
 
