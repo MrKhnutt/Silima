@@ -22,7 +22,7 @@ const statusText = document.getElementById("status-text");
 const serverAddress = document.getElementById("server-address");
 
 serverAddress.textContent = window.location.host;
-console.log("Silima Version 0.1a")
+console.log("Silima Version 0.1b")
 
 ws.addEventListener("open", () => {
     statusText.textContent = "Connected";
@@ -46,15 +46,14 @@ ws.addEventListener("error", (event) => {
 });
 
 ws.addEventListener("message", (event) => {
-    // console.log("Server:", event.data);
-    data = event.data.parse;
+    let data = JSON.parse(event.data);
     if (data.msg != "") { console.log(data.msg); }
     switch(data.type) {
         case "pollUpdate":
             let votes = data.value;
             let line = "";
             for (var i = 0; i < votes.length; i++) {
-                line += "${getButtonFromID(votes[i].id)}:${votes[i].count} "
+                line += `${getButtonFromID(votes[i].id)}:${votes[i].count} `
             }
             console.log(line);
             break;
