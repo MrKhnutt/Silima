@@ -24,7 +24,7 @@
 - Controller Elements
     - ✅ Connection Status
     - ⏸️ Room/Game
-    - 🛠️ Selected Vote
+    - ⬜ Selected Vote
     - ⬜ Polling Stats
     - ⬜ Gamemode
 - ⬜ Controller Themes
