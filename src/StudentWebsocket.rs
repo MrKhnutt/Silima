@@ -34,25 +34,16 @@ async fn handle_client(
     println!("Client connected");
 
     let (
-        mut wsSender, // Messages FROM the student
-        mut wsReceiver    // Messages going TO the student
+        mut wsSender, // Messages TO the student
+        mut wsReceiver    // Messages FROM the student
     ) = socket.split();
 
     loop{ tokio::select! {
         Some(result) = wsReceiver.next() => {
             match result {
                 Ok(Message::Text(text)) => {
-                    
                     println!("Received: {text}");
                     let _ = tx.send(text.to_string()).await;  // sends to buffer
-
-                    // send response, else panic
-                    wsSender
-                        .send(Message::Text(
-                            format!("Server received: {text}").into()
-                        ))
-                        .await
-                        .unwrap();
                 }
 
                 Ok(Message::Close(_)) => {
