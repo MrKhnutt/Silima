@@ -13,6 +13,7 @@
         - ✅ Democracy
     - ⬜ Game Mode Voting
     - ⬜ Spam Protection
+    - ✅ Polling Behavior Broadcast
 - ⏸️ Websocket Lifecycle
 - ⬜ Anonymous IP Binding
 - ⬜ Vote Resolution
@@ -24,7 +25,7 @@
     - ✅ Connection Status
     - ⏸️ Room/Game
     - 🛠️ Selected Vote
-    - 🛠️ Polling Stats
+    - ⬜ Polling Stats
     - ⬜ Gamemode
 - ⬜ Controller Themes
     - ⬜ GBC Controller
