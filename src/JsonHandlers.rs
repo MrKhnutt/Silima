@@ -10,7 +10,7 @@ pub fn createPollingJson(votes: Vec<(i32,i32)>) -> Result<std::string::String, s
 
     serde_json::to_string( &JsonPackage { 
         r#type: "pollUpdate",
-        msg:"TODO",
+        msg:"",
         value: votes.iter()
             .map(|(id, count)| Vote { 
                 id: *id, 
