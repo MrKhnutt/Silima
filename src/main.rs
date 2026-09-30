@@ -10,12 +10,13 @@ use tokio::{
     net::{TcpListener, UdpSocket},
     sync::{mpsc, watch},
 };
-use serde_json::{json, Value};
+// use serde_json::{json, Value};
 use local_ip_address::local_ip;
 use tower_http::services::ServeDir;
 
 mod StudentWebsocket;
 mod RetroArchHandler;
+mod JsonHandlers;
 
 #[tokio::main] // miso framework
 async fn main() {
@@ -24,16 +25,8 @@ async fn main() {
     println!("Students connect to http://{localIp}:42699");
 
     let (anaTx, anaRx) = mpsc::channel(32);
-    let (pollTx, pollRx) = watch::channel(Value::Null);
+    let (pollTx, pollRx) = watch::channel::<Option<String>>(None);
     // T is send, R is receive
-
-    let test = json!({
-        "type" : "vote_update",
-        "votes": {
-            "A" : 1,
-        }
-    });
-    _ = pollTx.send(test);
 
     let app =
         Router::new()

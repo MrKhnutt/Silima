@@ -8,13 +8,13 @@ use axum::{
 use tokio::{
     sync::{mpsc, watch},
 };
-use serde_json::{Value};
+// use serde_json::{Value};
 use futures_util::{SinkExt, StreamExt};
 
 pub async fn websocket_handler(
     ws: WebSocketUpgrade, 
     tx: mpsc::Sender<String>,
-    pollTx: watch::Receiver<Value>
+    pollTx: watch::Receiver<Option<String>>
 ) -> Response {
     // HTTP request
     ws.on_upgrade(move |ws: WebSocket| {
@@ -29,7 +29,7 @@ pub async fn websocket_handler(
 async fn handle_client(
     socket: WebSocket, 
     tx: mpsc::Sender<String>,
-    mut rx: watch::Receiver<Value>
+    mut rx: watch::Receiver<Option<String>>
 ){
     println!("Client connected");
 
@@ -72,11 +72,23 @@ async fn handle_client(
         _ = rx.changed() => {
 
             // update to send json stats
-            wsSender.send(Message::Text(
-                "Poll Update".into()
-            ))
-            .await
-            .unwrap();
+            let jsonStr = rx.borrow().clone();
+            match jsonStr {
+                Some(msg) => {
+                    wsSender.send(Message::Text(
+                        msg.into()
+                        ))
+                        .await
+                        .unwrap();
+                    }
+                None    => {
+                    wsSender.send(Message::Text(
+                        "Error".into()
+                        ))
+                    .await
+                    .unwrap();
+                    }
+                }
         }
     }}
 }
