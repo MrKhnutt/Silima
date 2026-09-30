@@ -97,7 +97,7 @@ pub async fn handleRaDemocracy(
                                 .collect::<Vec<(i32,i32)>>();
                             // sort values, winner in pos 0
                             v.shuffle(&mut rand::rng());
-                            v.sort_by_key(|(_,count)| *count);
+                            v.sort_by_key(|(_,count)| *count * -1);
                             if v.is_empty() { None } else { Some(v[0..POLL_ACTIONS_SENT.min(v.len())].to_vec()) }
                         };
                         // clear history here to preserve future
