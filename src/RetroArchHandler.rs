@@ -14,6 +14,10 @@ use rand::{
 };
 use crate::JsonHandlers;
 
+const MS_PER_FRAME: u64 = 17;
+const VOTING_PERIOD: u64 = 2000;
+const POLL_ACTIONS_SENT: usize = 4;
+
 fn ra_packet(id: i32, state: u16) -> [u8; 20] {
     let mut packet = [0u8; 20];
 
@@ -38,8 +42,7 @@ pub async fn handleRaDemocracy(
     mut rx: mpsc::Receiver<String>,
     pollWatch: watch::Sender<Option<String>>
 ) {
-    const MS_PER_FRAME: u64 = 17;
-    const VOTING_PERIOD: u64 = 2000;
+
     let mut inputVote = HashMap::new();
     let mut interval = time::interval(Duration::from_millis(VOTING_PERIOD));
 
@@ -95,7 +98,7 @@ pub async fn handleRaDemocracy(
                             // sort values, winner in pos 0
                             v.shuffle(&mut rand::rng());
                             v.sort_by_key(|(_,count)| *count);
-                            if v.is_empty() { None } else { Some(v) }
+                            if v.is_empty() { None } else { Some(v[0..POLL_ACTIONS_SENT.min(v.len())].to_vec()) }
                         };
                         // clear history here to preserve future
                         inputVote.clear();
