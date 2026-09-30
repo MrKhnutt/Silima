@@ -22,6 +22,7 @@ const statusText = document.getElementById("status-text");
 const serverAddress = document.getElementById("server-address");
 
 serverAddress.textContent = window.location.host;
+console.log("Silima Version 0.1a")
 
 ws.addEventListener("open", () => {
     statusText.textContent = "Connected";
@@ -85,7 +86,7 @@ function getButtonFromID(id) {
 }
 
 function sendSocket(input) {
-    console.log(input);
+    // console.log(input);
 
     if (ws.readyState === WebSocket.OPEN) {
         ws.send(input);
