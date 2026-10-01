@@ -1,13 +1,42 @@
-use std::process::Command;
+#![allow(non_snake_case)]
+
+use std::{fs, os::unix::ffi::OsStrExt};
+use blake3;
+use walkdir::WalkDir;
+use sha2::{Digest, Sha256};
 
 fn main() {
-    let output = Command::new("git")
-        .args(["rev-parse", "--short", "HEAD"])
-        .output()
-        .expect("Could not execute git");
+    println!("cargo::rerun-if-changed=src");
+    println!("cargo::rerun-if-changed=static");
 
-    let hash = String::from_utf8(output.stdout)
-        .expect("Git hash was not valid UTF-8");
+    let mut rsHash = blake3::Hasher::new();
+    let mut jsHash = Sha256::new();
 
-    println!("cargo::rustc-env=BUILD_GIT_HASH={}", hash.trim());
+    for entry in WalkDir::new("src") {
+        match entry {
+            Ok(filePath) => {
+                if filePath.file_type().is_file() {
+                    rsHash.update(filePath.file_name().as_bytes());
+                    rsHash.update(&fs::read(filePath.path()).unwrap());
+            }}
+            Err(_) => {}
+    }};
+    for entry in WalkDir::new("static") {
+        match entry {
+            Ok(filePath) => {
+                if filePath.file_type().is_file() {
+                    jsHash.update(filePath.file_name().as_bytes());
+                    jsHash.update(&fs::read(filePath.path()).unwrap());
+            }}
+            Err(_) => {}
+    }};
+
+    println!(
+        "cargo::rustc-env=BUILD_RS_HASH={}", 
+        &rsHash.finalize().to_hex().to_string()[..4]
+    );
+    println!(
+        "cargo::rustc-env=BUILD_JS_HASH={}", 
+        &hex::encode(jsHash.finalize())[..4]
+    );
 }
