@@ -18,6 +18,16 @@ mod StudentWebsocket;
 mod RetroArchHandler;
 mod JsonHandlers;
 
+async fn shutdownSignal() {
+    tokio::signal::ctrl_c()
+        .await
+        .expect("failed to listen for Ctrl+C");
+
+    println!("Shutting down Silima...");
+    // TODO add RA final release logic
+    // Notify clients?
+}
+
 #[tokio::main] // miso framework
 async fn main() {
 
@@ -55,7 +65,10 @@ async fn main() {
         ).await
     });
 
+    println!("Press Ctrl+c to exit...");
+
     axum::serve(listener, app)
+        .with_graceful_shutdown(shutdownSignal())
         .await
         .unwrap();
 }
