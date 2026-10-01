@@ -19,6 +19,7 @@
 - ⬜ Vote Resolution
 - ⬜ Networking Controller Binding
 - ✅ Build Hashing
+- ⬜ Build Sync
 
 ### Client UI
 
