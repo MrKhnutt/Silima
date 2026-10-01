@@ -25,7 +25,7 @@ pub const SILIMA_BUID_VER: &str = env!("CARGO_PKG_VERSION");
 #[tokio::main] // miso framework
 async fn main() {
 
-    println!("Silima ver {SILIMA_BUID_VER}:{SILIMA_BUILD_RS_HASH}{SILIMA_BUILD_JS_HASH}");
+    println!("♦Silima ver {SILIMA_BUID_VER}:{SILIMA_BUILD_RS_HASH}{SILIMA_BUILD_JS_HASH}");
 
     let localIp = local_ip().unwrap();
     println!("Students connect to http://{localIp}:42699");
