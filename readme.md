@@ -18,7 +18,7 @@
 - ⬜ Anonymous IP Binding
 - ⬜ Vote Resolution
 - ⬜ Networking Controller Binding
-- 🛠️ Build Hashing
+- ✅ Build Hashing
 
 ### Client UI
 
