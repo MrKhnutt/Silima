@@ -2,8 +2,7 @@
 
 // dependencies
 use axum::{
-    extract::ws::{Message, WebSocket, WebSocketUpgrade},
-    response::Response,
+    extract::ws::{Message, WebSocket},
 };
 use tokio::{
     sync::{mpsc, watch},
@@ -11,22 +10,7 @@ use tokio::{
 // use serde_json::{Value};
 use futures_util::{SinkExt, StreamExt};
 
-pub async fn websocket_handler(
-    ws: WebSocketUpgrade, 
-    tx: mpsc::Sender<String>,
-    pollTx: watch::Receiver<Option<String>>
-) -> Response {
-    // HTTP request
-    ws.on_upgrade(move |ws: WebSocket| {
-        handle_client(
-            ws, 
-            tx.clone(), 
-            pollTx.clone()
-        )
-    })
-}
-
-async fn handle_client(
+pub async fn handleClient(
     socket: WebSocket, 
     tx: mpsc::Sender<String>,
     mut rx: watch::Receiver<Option<String>>
