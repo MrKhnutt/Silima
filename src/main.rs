@@ -22,8 +22,17 @@ mod AdminWebsocket;
 
 pub const SILIMA_BUILD_RS_HASH: &str = env!("BUILD_RS_HASH");
 pub const SILIMA_BUILD_JS_HASH: &str = env!("BUILD_JS_HASH");
-pub const SILIMA_BUILD_AD_HASH: &str = env!("BUILD_AD_HASH");
-pub const SILIMA_BUILD_VER:      &str = env!("CARGO_PKG_VERSION");
+pub const SILIMA_BUILD_VER: &str = env!("CARGO_PKG_VERSION");
+
+async fn shutdownSignal() {
+    tokio::signal::ctrl_c()
+        .await
+        .expect("failed to listen for Ctrl+C");
+
+    println!("Shutting down Silima...");
+    // TODO add RA final release logic
+    // Notify clients?
+}
 
 #[tokio::main] // miso framework
 async fn main() {
@@ -42,7 +51,7 @@ async fn main() {
     println!("Admin connect to http://{localIp}:{adminPort}");
 
     let (cliTx, cliRx) = mpsc::channel(32);
-    let (admTx, admRx) = mpsc::channel(32);
+    let (admTx, _admRx) = mpsc::channel(32);
     let (pollTx, pollRx) = watch::channel::<Option<String>>(None);
     // T is send, R is receive
     let clientPollRx    = pollRx.clone();
@@ -50,16 +59,31 @@ async fn main() {
 
      let clientApp =
         Router::new()
-            .route("/ws", any(move |wsu: WebSocketUpgrade| {
-                Networking::websocketHandler(wsu, cliTx.clone(), clientPollRx.clone(), StudentWebsocket::handleClient)
-            }))
+            .route(
+                "/ws", 
+                any(
+                    move |wsu: WebSocketUpgrade| {
+                        Networking::websocketHandler(
+                            wsu, 
+                            cliTx.clone(), 
+                            clientPollRx.clone(), 
+                            StudentWebsocket::handleClient
+            )}))
             .nest_service("/media", ServeDir::new("media"))
             .fallback_service(ServeDir::new("static"));
+
     let adminApp =
         Router::new()
-            .route("/ws", any(move |wsu: WebSocketUpgrade| {
-                Networking::websocketHandler(wsu, admTx.clone(), adminPollRx.clone(), AdminWebsocket::handleClient)
-            }))
+            .route(
+                "/ws", 
+                any(
+                    move |wsu: WebSocketUpgrade| {
+                        Networking::websocketHandler(
+                            wsu, 
+                            admTx.clone(), 
+                            adminPollRx.clone(), 
+                            AdminWebsocket::handleClient
+            )}))
             .nest_service("/media", ServeDir::new("media"))
             .fallback_service(ServeDir::new("admin"));
 
@@ -91,8 +115,14 @@ async fn main() {
         ).await
     });
 
-    let clientService = axum::serve(clientListener, clientApp);
-    let adminService = axum::serve(adminListener, adminApp);
+    println!("Press Ctrl+c to exit...");
+
+    let clientService = 
+        axum::serve(clientListener, clientApp)
+            .with_graceful_shutdown(shutdownSignal());
+    let adminService = 
+        axum::serve(adminListener, adminApp)
+            .with_graceful_shutdown(shutdownSignal());
 
     let _ = tokio::join!(
         adminService,
