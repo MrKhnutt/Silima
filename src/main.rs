@@ -22,6 +22,16 @@ pub const SILIMA_BUILD_RS_HASH: &str = env!("BUILD_RS_HASH");
 pub const SILIMA_BUILD_JS_HASH: &str = env!("BUILD_JS_HASH");
 pub const SILIMA_BUID_VER: &str = env!("CARGO_PKG_VERSION");
 
+async fn shutdownSignal() {
+    tokio::signal::ctrl_c()
+        .await
+        .expect("failed to listen for Ctrl+C");
+
+    println!("Shutting down Silima...");
+    // TODO add RA final release logic
+    // Notify clients?
+}
+
 #[tokio::main] // miso framework
 async fn main() {
 
@@ -64,7 +74,10 @@ async fn main() {
         ).await
     });
 
+    println!("Press Ctrl+c to exit...");
+
     axum::serve(listener, app)
+        .with_graceful_shutdown(shutdownSignal())
         .await
         .unwrap();
 }
