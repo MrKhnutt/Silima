@@ -1,4 +1,4 @@
-# Silima.rs
+![Alt text](./media/silima.svg)
 
 ## ToDo List
 
