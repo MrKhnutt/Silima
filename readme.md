@@ -1,4 +1,4 @@
-# Silima.rs
+# ![Alt text](./media/logo/silimaLogoWhite.svg)
 
 ## ToDo List
 
@@ -13,18 +13,22 @@
         - ✅ Democracy
     - ⬜ Game Mode Voting
     - ⬜ Spam Protection
+    - ✅ Polling Behavior Broadcast
 - ⏸️ Websocket Lifecycle
 - ⬜ Anonymous IP Binding
 - ⬜ Vote Resolution
 - ⬜ Networking Controller Binding
+- ✅ Build Hashing
+- ⬜ Build Sync
+- ⬜ JS Hash Query Strings for Cache Updates
 
 ### Client UI
 
 - Controller Elements
     - ✅ Connection Status
     - ⏸️ Room/Game
-    - 🛠️ Selected Vote
-    - 🛠️ Polling Stats
+    - ⬜ Selected Vote
+    - ⬜ Polling Stats
     - ⬜ Gamemode
 - ⬜ Controller Themes
     - ⬜ GBC Controller

@@ -8,61 +8,150 @@ use axum::{
 };
 use tokio::{
     net::{TcpListener, UdpSocket},
-    sync::{mpsc, watch},
+    sync::{mpsc, watch,},
 };
-use serde_json::{json, Value};
+// use serde_json::{json, Value};
 use local_ip_address::local_ip;
 use tower_http::services::ServeDir;
 
 mod StudentWebsocket;
 mod RetroArchHandler;
+mod JsonHandlers;
+mod Networking;
+mod AdminWebsocket;
+
+pub const SILIMA_BUILD_RS_HASH: &str = env!("BUILD_RS_HASH");
+pub const SILIMA_BUILD_JS_HASH: &str = env!("BUILD_JS_HASH");
+pub const SILIMA_BUILD_VER: &str = env!("CARGO_PKG_VERSION");
+
+async fn shutdownSignal(
+    mut shutdownRx: watch::Receiver<bool>
+) {
+    // let result = shutdownRx.wait_for(|value| *value).await;
+    // println!("shutdownSignal ended: {:?}", result);
+    // loop {
+        tokio::select! {
+            _ = tokio::signal::ctrl_c() => {}
+            msg = shutdownRx.wait_for(|value| *value) => {
+                println!("{:?}", msg);
+            }
+    }
+    // tokio::signal::ctrl_c()
+    //     .await
+    //     .expect("failed to listen for Ctrl+C");
+
+    println!("Shutting down Silima...");
+    // TODO add RA final release logic
+    // Notify clients?
+}
 
 #[tokio::main] // miso framework
 async fn main() {
 
+    println!("♦Silima ver {SILIMA_BUILD_VER}:{SILIMA_BUILD_RS_HASH}{SILIMA_BUILD_JS_HASH}");
+
+    // **IP ADDRESSES**
     let localIp = local_ip().unwrap();
-    println!("Students connect to http://{localIp}:42699");
+    let clientAddr = "0.0.0.0";
+    let clientPort = "42699";
 
-    let (anaTx, anaRx) = mpsc::channel(32);
-    let (pollTx, _pollRx) = watch::channel(Value::Null);
+    let adminAddr = "0.0.0.0";
+    let adminPort = "42614";
+
+    println!("Students connect to http://{localIp}:{clientPort}");
+    println!("Admin connect to http://{localIp}:{adminPort}");
+
+    let (cliTx, cliRx) = mpsc::channel(32);
+    let (admTx, admRx) = mpsc::channel(32);
+    let (shutdownTx, shutdownRx) = watch::channel::<bool>(false);
+    let (pollTx, pollRx) = watch::channel::<Option<String>>(None);
     // T is send, R is receive
+    let clientPollRx    = pollRx.clone();
+    let adminPollRx     = pollRx.clone();
 
-    let test = json!({
-        "type" : "vote_update",
-        "votes": {
-            "A" : 1,
-        }
-    });
-    _ = pollTx.send(test);
-
-    let app =
+     let clientApp =
         Router::new()
-            .route("/ws", any(move |wsu: WebSocketUpgrade| {
-                StudentWebsocket::websocket_handler(wsu, anaTx.clone(), pollTx.clone())
-            }))
+            .route(
+                "/ws", 
+                any(
+                    move |wsu: WebSocketUpgrade| {
+                        Networking::websocketHandler(
+                            wsu,
+                            cliTx.clone(),
+                            clientPollRx.clone(),
+                            StudentWebsocket::handleClient
+            )}))
+            .nest_service("/media", ServeDir::new("media"))
             .fallback_service(ServeDir::new("static"));
 
-    let addr = "0.0.0.0";
-    let port = "42699";
-    let listener = TcpListener::bind(format!("{addr}:{port}"))
+    let adminApp =
+        Router::new()
+            .route(
+                "/ws", 
+                any(
+                    move |wsu: WebSocketUpgrade| {
+                        Networking::websocketHandler(
+                            wsu, 
+                            admTx.clone(), 
+                            adminPollRx.clone(), 
+                            AdminWebsocket::handleClient
+            )}))
+            .nest_service("/media", ServeDir::new("media"))
+            .fallback_service(ServeDir::new("admin"));
+
+    let clientListener = TcpListener::bind(format!("{clientAddr}:{clientPort}"))
+        .await
+        .unwrap();
+    let adminListener = TcpListener::bind(format!("{adminAddr}:{adminPort}"))
         .await
         .unwrap();
 
-    println!("{}", format!("Listening on ws://{addr}:{port}/ws"));
+    if let Err(error) = webbrowser::open(&format!("http://{localIp}:{adminPort}")) {
+        eprintln!("Could not open admin page: {error}");
+    } 
+    if let Err(error) = webbrowser::open(&format!("http://{localIp}:{clientPort}")) {
+        eprintln!("Could not open client page: {error}");
+    }
+        
+    println!("{}", format!("Listening on ws://{clientAddr}:{clientPort}/ws"));
 
     //retroarch network controller
     let raAddr = "127.0.0.1";
     let raPort = "55400";
     println!("{}", format!("Talking on {raAddr}:0"));
 
-    tokio::spawn(async move {
-        RetroArchHandler::handle_ra(
+    let raControllerParser = tokio::spawn(async move {
+        RetroArchHandler::handleRaDemocracy(
             UdpSocket::bind(format!("{raAddr}:0")).await.expect("failed to bind UDP socket"), 
-            format!("{raAddr}:{raPort}"), anaRx
-        ).await
+            format!("{raAddr}:{raPort}"), cliRx, pollTx
+        )
+    });
+    let adminCommandParser = tokio::spawn(async move {
+        AdminWebsocket::adminMessageParser(
+            admRx,
+            shutdownTx.clone()
+        )
     });
 
-    axum::serve(listener, app)
-        .await
-        .unwrap();
+    println!("Press Ctrl+c to exit...");
+
+    let clientService = 
+        axum::serve(clientListener, clientApp)
+            .with_graceful_shutdown(
+                shutdownSignal(
+                    shutdownRx.clone()
+        ));
+    let adminService = 
+        axum::serve(adminListener, adminApp)
+            .with_graceful_shutdown(
+                shutdownSignal(
+                    shutdownRx.clone()
+        ));
+
+    let _ = tokio::join!(
+        adminService,
+        clientService,
+        raControllerParser,
+        adminCommandParser,
+    );
 }

@@ -2,15 +2,21 @@
 
 // dependencies
 use tokio::{
-    time,
-    net::UdpSocket,
-    sync::mpsc,
+    net::UdpSocket, sync::{mpsc, watch}, time,
 };
 use std::{
     collections::HashMap,
     time::Duration,
 };
-use rand::seq::IteratorRandom;
+use rand::{
+        seq::SliceRandom,
+        // thread_rng,
+};
+use crate::JsonHandlers;
+
+const MS_PER_FRAME: u64 = 17;
+const VOTING_PERIOD: u64 = 2000;
+const POLL_ACTIONS_SENT: usize = 4;
 
 fn ra_packet(id: i32, state: u16) -> [u8; 20] {
     let mut packet = [0u8; 20];
@@ -30,22 +36,21 @@ fn ra_packet(id: i32, state: u16) -> [u8; 20] {
     packet
 }
 
-pub async fn handle_ra(
+pub async fn handleRaDemocracy(
     udp: UdpSocket,
     udpAddress: String,
-    mut rx: mpsc::Receiver<String>
+    mut rx: mpsc::Receiver<String>,
+    pollWatch: watch::Sender<Option<String>>
 ) {
-    const MS_PER_FRAME: u64 = 17;
-    const VOTING_PERIOD: u64 = 2000;
+
     let mut inputVote = HashMap::new();
     let mut interval = time::interval(Duration::from_millis(VOTING_PERIOD));
-
 
     loop {
         tokio::select! {
             // input received
             message = rx.recv() => {
-                // map to bid for controller
+                // map to bind for controller
                 if let Some(message) = message {
                     let id: i32 = match message.as_str() {
                         "A" => 8,
@@ -77,22 +82,36 @@ pub async fn handle_ra(
                     // return is valid
                     Some((_,_)) => {
                         // clone to preserve future
-                        let maxCount = inputVote.values().max().copied();
-                        let winner = {
-                            let mut rng = rand::rng();
+                        // let maxCount = inputVote.values().max().copied();
+                        // let mut rng = rand::rng();
+                        let winnerVec: Option<Vec<(i32, i32)>> = {
+                            // sort the database to allow for winner to be chosen
+                            let mut v = inputVote.iter()
+                                // // collect the max value
+                                // .filter(|(_,count)| Some(**count) == maxCount)
+                                // .choose(&mut rng)
+                                // .map(|(id, count)| (*id, *count))
 
-                            inputVote.iter()
-                                .filter(|(_,count)| Some(**count) == maxCount)
-                                .choose(&mut rng)
+                                // collect all values
                                 .map(|(id, count)| (*id, *count))
+                                .collect::<Vec<(i32,i32)>>();
+                            // sort values, winner in pos 0
+                            v.shuffle(&mut rand::rng());
+                            v.sort_by_key(|(_,count)| *count * -1);
+                            if v.is_empty() { None } else { Some(v[0..POLL_ACTIONS_SENT.min(v.len())].to_vec()) }
                         };
                         // clear history here to preserve future
                         inputVote.clear();
                         // future in peril due to await
-                        match winner {
+                        match winnerVec {
                                 // input received
-                                Some((id,count)) => {
+                                Some(votes) => {
+                                    let (id, count) = votes[0];
                                     println!("Voted {} at {} times", id, count);
+                                    match JsonHandlers::createPollingJson(votes.clone()) {
+                                        Ok(json)    => {let _ = pollWatch.send(Some(json)); ()},
+                                        Err(e)      => {println!("{e}"); ()},
+                                    }
                                     // ra_packet builds the byte collection through shifting to send via UDP
                                     let _ = udp.send_to(&ra_packet(id, 1), &udpAddress).await;  // press
                                     time::sleep(Duration::from_millis(MS_PER_FRAME)).await;
@@ -104,7 +123,7 @@ pub async fn handle_ra(
                             }
                         };
                     } None => {
-                        println!("No action selected, panic?");
+                        // println!("No action selected, panic?");
                     }
             }}}
     }

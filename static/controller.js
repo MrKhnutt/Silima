@@ -22,6 +22,7 @@ const statusText = document.getElementById("status-text");
 const serverAddress = document.getElementById("server-address");
 
 serverAddress.textContent = window.location.host;
+console.log("Silima Version 0.1b")
 
 ws.addEventListener("open", () => {
     statusText.textContent = "Connected";
@@ -45,11 +46,46 @@ ws.addEventListener("error", (event) => {
 });
 
 ws.addEventListener("message", (event) => {
-    console.log("Server:", event.data);
+    let data = JSON.parse(event.data);
+    if (data.msg != "") { console.log(data.msg); }
+    switch(data.type) {
+        case "pollUpdate":
+            let votes = data.value;
+            let line = "";
+            for (var i = 0; i < votes.length; i++) {
+                line += `${getButtonFromID(votes[i].id)}:${votes[i].count} `
+            }
+            console.log(line);
+            break;
+        default:
+            console.log("JSON not recognized")
+    }
 });
 
+function getButtonFromID(id) {
+    switch (id) {
+        case 8: return "A";
+        case 0: return "B";
+        case 9: return "X";
+        case 1: return "Y";
+
+        case 3: return "START";
+        case 2: return "SELECT";
+
+        case 4: return "UP";
+        case 5: return "DOWN";
+        case 6: return "LEFT";
+        case 7: return "RIGHT";
+
+        case 10: return "L";
+        case 11: return "R";
+
+        case -1: throw Error("Invalid Button Recieved from pollUpdate J01");
+    }
+}
+
 function sendSocket(input) {
-    console.log(input);
+    // console.log(input);
 
     if (ws.readyState === WebSocket.OPEN) {
         ws.send(input);
