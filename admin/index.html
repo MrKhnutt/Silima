@@ -8,7 +8,6 @@
 
     <link rel="stylesheet" href="admin.css">
     <link rel="icon" href="/media/logo/icons/silimaColor.ico">
-    <script src="admin.js"></script>
 </head>
 
 <body>
@@ -21,8 +20,8 @@
         </div>
 
         <div class="server-status">
-            <span class="status-light online" id="server-status-light"></span>
-            <span id="server-status-text">Server Online</span>
+            <span class="status-light offline" id="server-status-light"></span>
+            <span id="server-status-text">Server Offline</span>
         </div>
     </header>
 
@@ -43,27 +42,27 @@
             <div class="stat-row">
                 <span>RetroArch</span>
                 <span class="status-value">
-                    <span class="status-light online"
+                    <span class="status-light offline"
                           id="retroarch-status-light"></span>
-                    <span id="retroarch-status">Connected</span>
+                    <span id="retroarch-status">Disconnected</span>
                 </span>
             </div>
 
             <div class="stat-row">
                 <span>WebSocket</span>
                 <span class="status-value">
-                    <span class="status-light online"
+                    <span class="status-light offline"
                           id="websocket-status-light"></span>
-                    <span id="websocket-status">Running</span>
+                    <span id="websocket-status">Disconnected</span>
                 </span>
             </div>
 
             <div class="stat-row">
                 <span>Voting</span>
                 <span class="status-value">
-                    <span class="status-light online"
+                    <span class="status-light offline"
                           id="voting-status-light"></span>
-                    <span id="voting-status">Active</span>
+                    <span id="voting-status">Inactive</span>
                 </span>
             </div>
 
@@ -293,4 +292,7 @@
 
 
 </body>
+
+<script src="admin.js"></script>
+
 </html>

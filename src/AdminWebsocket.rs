@@ -5,9 +5,9 @@ use axum::{
     extract::ws::{Message, WebSocket},
 };
 use tokio::{
-    sync::{mpsc, watch},
+    sync::{mpsc, watch,}
 };
-// use serde_json::{Value};
+use serde_json::{Value};
 use futures_util::{SinkExt, StreamExt};
 
 pub async fn handleClient(
@@ -66,4 +66,34 @@ pub async fn handleClient(
                 }
         }
     }}
+}
+
+pub async fn adminMessageParser(
+    mut rx: mpsc::Receiver<String>,
+    sdTx: watch::Sender<bool>
+) {
+    let mut sdTx = Some(sdTx);
+    loop {
+        tokio::select! {
+            message = rx.recv() => {
+                // println!("{:?}", message);
+                let msg: Value = match message {
+                    Some(msg) => {
+                        serde_json::from_str(&msg).unwrap()
+                    },
+                    None => continue,
+                };
+                match msg.get("type").and_then(|v| v.as_str()) {
+                    Some("admin_connected") => { println!("Admin Received") },
+                    Some("shutdown") => { 
+                        // println!("boop");
+                        if let Some(tx) = sdTx.take() 
+                            { let _ = tx.send(true); } 
+                        },
+                    Some(unknown) => { println!("Unknown type received from Admin: {unknown}"); },
+                    None => { continue; }
+                };
+            }
+        }
+    }
 }

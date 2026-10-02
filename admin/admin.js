@@ -249,23 +249,23 @@ socket.addEventListener("message", (event) => {
    STATUS HELPERS
 ========================= */
 
-// function setStatus(light, text, active, label) {
+function setStatus(light, text, active, label) {
 
-//     light.classList.remove(
-//         "online",
-//         "warning",
-//         "offline"
-//     );
+    light.classList.remove(
+        "online",
+        "warning",
+        "offline"
+    );
 
-//     if (active) {
-//         light.classList.add("online");
-//     }
-//     else {
-//         light.classList.add("offline");
-//     }
+    if (active) {
+        light.classList.add("online");
+    }
+    else {
+        light.classList.add("offline");
+    }
 
-//     text.textContent = label;
-// }
+    text.textContent = label;
+}
 
 
 // function updateVotingStatus(active) {
@@ -287,15 +287,15 @@ socket.addEventListener("message", (event) => {
    SEND MESSAGE
 ========================= */
 
-// function sendMessage(message) {
+function sendMessage(message) {
 
-//     if (socket.readyState !== WebSocket.OPEN) {
-//         console.warn("Cannot send: WebSocket is not open.");
-//         return;
-//     }
+    if (socket.readyState !== WebSocket.OPEN) {
+        console.warn("Cannot send: WebSocket is not open.");
+        return;
+    }
 
-//     socket.send(JSON.stringify(message));
-// }
+    socket.send(JSON.stringify(message));
+}
 
 // /* =========================
 //    ADMIN CONTROLS
@@ -335,17 +335,17 @@ socket.addEventListener("message", (event) => {
 //     });
 // });
 
-// shutdownServer.addEventListener("click", () => {
+shutdownServer.addEventListener("click", () => {
 
-//     const confirmed =
-//         window.confirm("Shut down the Silima server?");
-//     if (!confirmed) {
-//         return;
-//     }
-//     sendMessage({
-//         type: "shutdown"
-//     });
-// });
+    const confirmed =
+        window.confirm("Shut down the Silima server?");
+    if (!confirmed) {
+        return;
+    }
+    sendMessage({
+        type: "shutdown"
+    });
+});
 
 
 /* =========================
