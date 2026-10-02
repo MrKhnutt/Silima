@@ -36,9 +36,12 @@ async fn main() {
 
     let app =
         Router::new()
-            .route("/ws", any(move |wsu: WebSocketUpgrade| {
-                StudentWebsocket::websocket_handler(wsu, anaTx.clone(), pollRx.clone())
+            .route(
+                "/ws", 
+                any(move |wsu: WebSocketUpgrade| {
+                    StudentWebsocket::websocket_handler(wsu, anaTx.clone(), pollRx.clone())
             }))
+            .nest_service("/media", ServeDir::new("media"))
             .fallback_service(ServeDir::new("static"));
 
     let addr = "0.0.0.0";
