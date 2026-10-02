@@ -15,7 +15,7 @@ pub async fn handleClient(
     tx: mpsc::Sender<String>,
     mut rx: watch::Receiver<Option<String>>
 ){
-    println!("Client connected");
+    println!("Admin connected");
 
     let (
         mut wsSender, // Messages TO the student

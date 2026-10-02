@@ -1,6 +1,22 @@
-const protocol = window.location.protocol === "https:" ? "wss" : "ws";
-const socket = new WebSocket(`${protocol}://${window.location.host}/ws`);
+// const listeners = {
+//     a: pressA,
+//     b: pressB,
+//     x: pressX,
+//     y: pressY,
+//     start: pressStart,
+//     select: pressSelect,
+//     l: pressL,
+//     r: pressR,
+//     up: pressUp,
+//     left: pressLeft,
+//     down: pressDown,
+//     right: pressRight,
+// };
 
+const wsProtocol = window.location.protocol === "https:" ? "wss" : "ws";
+const socket = new WebSocket(`${wsProtocol}://${window.location.host}/ws`);
+
+console.log("Page:", window.location.href);
 
 /* =========================
    DOM REFERENCES
@@ -57,7 +73,6 @@ socket.addEventListener("open", () => {
     });
 });
 
-
 socket.addEventListener("close", () => {
     setStatus(
         serverStatusLight,
@@ -74,10 +89,8 @@ socket.addEventListener("close", () => {
     );
 });
 
-
 socket.addEventListener("error", (error) => {
     console.error("WebSocket error:", error);
-
     setStatus(
         websocketStatusLight,
         websocketStatus,
@@ -85,7 +98,6 @@ socket.addEventListener("error", (error) => {
         "Error"
     );
 });
-
 
 socket.addEventListener("message", (event) => {
     try {
@@ -102,280 +114,253 @@ socket.addEventListener("message", (event) => {
    SERVER MESSAGE HANDLER
 ========================= */
 
-function handleServerMessage(message) {
+// function handleServerMessage(message) {
 
-    switch (message.type) {
+//     switch (message.type) {
 
-        case "client_count":
-            studentCount.textContent = message.count;
-            break;
-
-
-        case "retroarch_status":
-            setStatus(
-                retroarchStatusLight,
-                retroarchStatus,
-                message.connected,
-                message.connected ? "Connected" : "Disconnected"
-            );
-            break;
+//         case "client_count":
+//             studentCount.textContent = message.count;
+//             break;
 
 
-        case "voting_status":
-            updateVotingStatus(message.active);
-            break;
+//         case "retroarch_status":
+//             setStatus(
+//                 retroarchStatusLight,
+//                 retroarchStatus,
+//                 message.connected,
+//                 message.connected ? "Connected" : "Disconnected"
+//             );
+//             break;
 
 
-        case "voting_period":
-            currentPeriod.textContent = message.period;
-
-            // Only update the input if the teacher isn't currently editing it.
-            if (document.activeElement !== votingPeriod) {
-                votingPeriod.value = message.period;
-            }
-
-            break;
+//         case "voting_status":
+//             updateVotingStatus(message.active);
+//             break;
 
 
-        case "vote_update":
-            updateVotes(message.votes);
-            break;
+//         case "voting_period":
+//             currentPeriod.textContent = message.period;
+
+//             // Only update the input if the teacher isn't currently editing it.
+//             if (document.activeElement !== votingPeriod) {
+//                 votingPeriod.value = message.period;
+//             }
+
+//             break;
 
 
-        case "winner":
-            currentWinner.textContent = message.input ?? "None";
-            break;
+//         case "vote_update":
+//             updateVotes(message.votes);
+//             break;
 
 
-        case "state":
-            updateFullState(message);
-            break;
+//         case "winner":
+//             currentWinner.textContent = message.input ?? "None";
+//             break;
 
 
-        default:
-            console.warn("Unknown server message:", message);
-    }
-}
+//         case "state":
+//             updateFullState(message);
+//             break;
 
+
+//         default:
+//             console.warn("Unknown server message:", message);
+//     }
+// }
 
 /* =========================
    FULL STATE UPDATE
 ========================= */
 
-function updateFullState(state) {
+// function updateFullState(state) {
 
-    if (state.clientCount !== undefined) {
-        studentCount.textContent = state.clientCount;
-    }
+//     if (state.clientCount !== undefined) {
+//         studentCount.textContent = state.clientCount;
+//     }
+//     if (state.retroarchConnected !== undefined) {
+//         setStatus(
+//             retroarchStatusLight,
+//             retroarchStatus,
+//             state.retroarchConnected,
+//             state.retroarchConnected
+//                 ? "Connected"
+//                 : "Disconnected"
+//         );
+//     }
 
-
-    if (state.retroarchConnected !== undefined) {
-        setStatus(
-            retroarchStatusLight,
-            retroarchStatus,
-            state.retroarchConnected,
-            state.retroarchConnected
-                ? "Connected"
-                : "Disconnected"
-        );
-    }
-
-
-    if (state.votingActive !== undefined) {
-        updateVotingStatus(state.votingActive);
-    }
-
-
-    if (state.period !== undefined) {
-        currentPeriod.textContent = state.period;
-        votingPeriod.value = state.period;
-    }
-
-
-    if (state.votes !== undefined) {
-        updateVotes(state.votes);
-    }
-
-
-    if (state.winner !== undefined) {
-        currentWinner.textContent = state.winner ?? "None";
-    }
-}
+//     if (state.votingActive !== undefined) {
+//         updateVotingStatus(state.votingActive);
+//     }
+//     if (state.period !== undefined) {
+//         currentPeriod.textContent = state.period;
+//         votingPeriod.value = state.period;
+//     }
+//     if (state.votes !== undefined) {
+//         updateVotes(state.votes);
+//     }
+//     if (state.winner !== undefined) {
+//         currentWinner.textContent = state.winner ?? "None";
+//     }
+// }
 
 
 /* =========================
    VOTING DISPLAY
 ========================= */
 
-function updateVotes(votes) {
+// function updateVotes(votes) {
 
-    const voteRows = document.querySelectorAll(".vote-row");
-
-    let highestVote = 0;
-
-
-    for (const row of voteRows) {
-
-        const input = row.dataset.input;
-
-        const count = votes[input] ?? 0;
-
-        if (count > highestVote) {
-            highestVote = count;
-        }
-
-        row.querySelector(".vote-count").textContent = count;
-    }
+//     const voteRows = document.querySelectorAll(".vote-row");
+//     let highestVote = 0;
 
 
-    for (const row of voteRows) {
+//     for (const row of voteRows) {
 
-        const input = row.dataset.input;
-        const count = votes[input] ?? 0;
+//         const input = row.dataset.input;
+//         const count = votes[input] ?? 0;
 
-        const bar = row.querySelector(".vote-bar");
+//         if (count > highestVote) {
+//             highestVote = count;
+//         }
 
-        let percentage = 0;
+//         row.querySelector(".vote-count").textContent = count;
+//     }
 
-        if (highestVote > 0) {
-            percentage = (count / highestVote) * 100;
-        }
 
-        bar.style.width = `${percentage}%`;
-    }
-}
+//     for (const row of voteRows) {
+
+//         const input = row.dataset.input;
+//         const count = votes[input] ?? 0;
+//         const bar = row.querySelector(".vote-bar");
+
+//         let percentage = 0;
+
+//         if (highestVote > 0) {
+//             percentage = (count / highestVote) * 100;
+//         }
+
+//         bar.style.width = `${percentage}%`;
+//     }
+// }
 
 
 /* =========================
    STATUS HELPERS
 ========================= */
 
-function setStatus(light, text, active, label) {
+// function setStatus(light, text, active, label) {
 
-    light.classList.remove(
-        "online",
-        "warning",
-        "offline"
-    );
+//     light.classList.remove(
+//         "online",
+//         "warning",
+//         "offline"
+//     );
 
-    if (active) {
-        light.classList.add("online");
-    }
-    else {
-        light.classList.add("offline");
-    }
+//     if (active) {
+//         light.classList.add("online");
+//     }
+//     else {
+//         light.classList.add("offline");
+//     }
 
-    text.textContent = label;
-}
+//     text.textContent = label;
+// }
 
 
-function updateVotingStatus(active) {
+// function updateVotingStatus(active) {
 
-    setStatus(
-        votingStatusLight,
-        votingStatus,
-        active,
-        active ? "Active" : "Paused"
-    );
+//     setStatus(
+//         votingStatusLight,
+//         votingStatus,
+//         active,
+//         active ? "Active" : "Paused"
+//     );
 
-    toggleVoting.textContent =
-        active
-            ? "Pause Voting"
-            : "Resume Voting";
-}
-
+//     toggleVoting.textContent =
+//         active
+//             ? "Pause Voting"
+//             : "Resume Voting";
+// }
 
 /* =========================
    SEND MESSAGE
 ========================= */
 
-function sendMessage(message) {
+// function sendMessage(message) {
 
-    if (socket.readyState !== WebSocket.OPEN) {
-        console.warn("Cannot send: WebSocket is not open.");
-        return;
-    }
+//     if (socket.readyState !== WebSocket.OPEN) {
+//         console.warn("Cannot send: WebSocket is not open.");
+//         return;
+//     }
 
-    socket.send(JSON.stringify(message));
-}
+//     socket.send(JSON.stringify(message));
+// }
 
+// /* =========================
+//    ADMIN CONTROLS
+// ========================= */
 
-/* =========================
-   ADMIN CONTROLS
-========================= */
+// toggleVoting.addEventListener("click", () => {
+//     sendMessage({
+//         type: "toggle_voting"
+//     });
+// });
 
-toggleVoting.addEventListener("click", () => {
+// clearVotes.addEventListener("click", () => {
+//     sendMessage({
+//         type: "clear_votes"
+//     });
+// });
 
-    sendMessage({
-        type: "toggle_voting"
-    });
-});
+// applyPeriod.addEventListener("click", () => {
 
+//     const period = Number(votingPeriod.value);
 
-clearVotes.addEventListener("click", () => {
+//     if (!Number.isFinite(period) || period < 100) {
+//         console.warn("Invalid voting period.");
+//         return;
+//     }
 
-    sendMessage({
-        type: "clear_votes"
-    });
-});
+//     sendMessage({
+//         type: "set_voting_period",
+//         period: period
+//     });
+// });
 
+// disconnectClients.addEventListener("click", () => {
 
-applyPeriod.addEventListener("click", () => {
+//     sendMessage({
+//         type: "disconnect_clients"
+//     });
+// });
 
-    const period = Number(votingPeriod.value);
+// shutdownServer.addEventListener("click", () => {
 
-    if (!Number.isFinite(period) || period < 100) {
-        console.warn("Invalid voting period.");
-        return;
-    }
-
-    sendMessage({
-        type: "set_voting_period",
-        period: period
-    });
-});
-
-
-disconnectClients.addEventListener("click", () => {
-
-    sendMessage({
-        type: "disconnect_clients"
-    });
-});
-
-
-shutdownServer.addEventListener("click", () => {
-
-    const confirmed =
-        window.confirm("Shut down the Silima server?");
-
-    if (!confirmed) {
-        return;
-    }
-
-    sendMessage({
-        type: "shutdown"
-    });
-});
+//     const confirmed =
+//         window.confirm("Shut down the Silima server?");
+//     if (!confirmed) {
+//         return;
+//     }
+//     sendMessage({
+//         type: "shutdown"
+//     });
+// });
 
 
 /* =========================
    MANUAL CONTROLLER
 ========================= */
 
-const controllerButtons =
-    document.querySelectorAll(".controller-button");
+// const controllerButtons =
+//     document.querySelectorAll(".controller-button");
 
-
-controllerButtons.forEach((button) => {
-
-    button.addEventListener("click", () => {
-
-        const input = button.dataset.input;
-
-        sendMessage({
-            type: "manual_input",
-            input: input
-        });
-    });
-});
+// controllerButtons.forEach((button) => {
+//     button.addEventListener("click", () => {
+//         const input = button.dataset.input;
+//         sendMessage({
+//             type: "manual_input",
+//             input: input
+//         });
+//     });
+// });

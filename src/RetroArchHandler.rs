@@ -123,7 +123,7 @@ pub async fn handleRaDemocracy(
                             }
                         };
                     } None => {
-                        println!("No action selected, panic?");
+                        // println!("No action selected, panic?");
                     }
             }}}
     }

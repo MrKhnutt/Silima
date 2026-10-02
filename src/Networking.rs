@@ -23,6 +23,7 @@ pub async fn websocketHandler<FN, FUT>(
             watch::Receiver<Option<String>>
 ) -> FUT + Send + 'static, 
      FUT: Future<Output = ()> + Send + 'static, {
+    println!("Request Received");
     // HTTP request
     ws.on_upgrade(move |ws: WebSocket| {
         handles(
