@@ -1,4 +1,4 @@
-![Alt text](./media/silima.svg)
+![Alt text](./media/logo/silimaLogoWhite.svg)
 
 ## ToDo List
 
