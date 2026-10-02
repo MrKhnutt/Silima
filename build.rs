@@ -11,6 +11,7 @@ fn main() {
 
     let mut rsHash = blake3::Hasher::new();
     let mut jsHash = Sha256::new();
+    let mut adHash = Sha256::new();
 
     for entry in WalkDir::new("src") {
         match entry {
@@ -30,6 +31,15 @@ fn main() {
             }}
             Err(_) => {}
     }};
+    for entry in WalkDir::new("admin") {
+        match entry {
+            Ok(filePath) => {
+                if filePath.file_type().is_file() {
+                    adHash.update(filePath.file_name().as_bytes());
+                    adHash.update(&fs::read(filePath.path()).unwrap());
+            }}
+            Err(_) => {}
+    }};
 
     println!(
         "cargo::rustc-env=BUILD_RS_HASH={}", 
@@ -38,5 +48,9 @@ fn main() {
     println!(
         "cargo::rustc-env=BUILD_JS_HASH={}", 
         &hex::encode(jsHash.finalize())[..4]
+    );
+    println!(
+        "cargo::rustc-env=BUILD_AD_HASH={}", 
+        &hex::encode(adHash.finalize())[..4]
     );
 }
