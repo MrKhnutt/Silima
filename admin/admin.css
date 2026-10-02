@@ -1,0 +1,428 @@
+* {
+    box-sizing: border-box;
+}
+
+body {
+    margin: 0;
+
+    font-family:
+        system-ui,
+        -apple-system,
+        BlinkMacSystemFont,
+        "Segoe UI",
+        sans-serif;
+
+    background: #181818;
+    color: #eeeeee;
+}
+
+
+/* =========================
+   TOP BAR
+========================= */
+
+.topbar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+
+    padding: 20px 30px;
+
+    background: #222222;
+    border-bottom: 1px solid #444444;
+}
+
+.topbar h1 {
+    margin: 0;
+    font-size: 1.8rem;
+}
+
+.topbar img {
+    height: 3rem;
+    width: auto;
+}
+
+.topbar p {
+    margin: 4px 0 0;
+    color: #aaaaaa;
+}
+
+.server-status {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+
+    font-weight: 600;
+}
+
+
+/* =========================
+   DASHBOARD GRID
+========================= */
+
+.dashboard {
+    display: grid;
+
+    grid-template-columns:
+        minmax(250px, 1fr)
+        minmax(400px, 2fr);
+
+    gap: 20px;
+
+    max-width: 1200px;
+
+    margin: auto;
+    padding: 25px;
+}
+
+
+/* =========================
+   PANELS
+========================= */
+
+.panel {
+    background: #242424;
+
+    border: 1px solid #444444;
+    border-radius: 8px;
+
+    padding: 20px;
+}
+
+.panel h2 {
+    margin-top: 0;
+
+    font-size: 1rem;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+
+    color: #bbbbbb;
+}
+
+
+/* =========================
+   STATUS
+========================= */
+
+.stat-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+
+    padding: 10px 0;
+
+    border-bottom: 1px solid #383838;
+}
+
+.stat-row:last-child {
+    border-bottom: none;
+}
+
+.status-value {
+    display: flex;
+    align-items: center;
+
+    gap: 6px;
+}
+
+.status-light {
+    width: 10px;
+    height: 10px;
+
+    border-radius: 50%;
+
+    background: #777777;
+}
+
+.status-light.online {
+    background: #6bc46d;
+}
+
+.status-light.warning {
+    background: #e5b94d;
+}
+
+.status-light.offline {
+    background: #d35f5f;
+}
+
+
+/* =========================
+   LIVE VOTING
+========================= */
+
+.vote-list {
+    display: flex;
+    flex-direction: column;
+
+    gap: 12px;
+}
+
+.vote-row {
+    display: grid;
+
+    grid-template-columns:
+        70px
+        1fr
+        40px;
+
+    align-items: center;
+
+    gap: 10px;
+}
+
+.vote-name {
+    font-weight: 600;
+}
+
+.vote-count {
+    text-align: right;
+}
+
+.vote-bar-container {
+    height: 16px;
+
+    overflow: hidden;
+
+    background: #151515;
+
+    border-radius: 3px;
+}
+
+.vote-bar {
+    height: 100%;
+
+    background: #8ca4c8;
+
+    transition: width 150ms ease;
+}
+
+.winner-display {
+    margin-top: 20px;
+    padding-top: 15px;
+
+    border-top: 1px solid #444444;
+
+    font-size: 1.1rem;
+}
+
+
+/* =========================
+   BUTTONS
+========================= */
+
+button {
+    padding: 10px 16px;
+
+    border: 1px solid #555555;
+    border-radius: 5px;
+
+    background: #333333;
+    color: #eeeeee;
+
+    font-size: 0.95rem;
+
+    cursor: pointer;
+}
+
+button:hover {
+    background: #414141;
+}
+
+button:active {
+    transform: translateY(1px);
+}
+
+button.danger {
+    background: #722c2c;
+    border-color: #9b4141;
+}
+
+button.danger:hover {
+    background: #893737;
+}
+
+
+/* =========================
+   VOTING CONTROLS
+========================= */
+
+.controls-panel {
+    display: flex;
+    flex-direction: column;
+
+    gap: 12px;
+}
+
+.setting-control {
+    margin-top: 10px;
+
+    padding-top: 15px;
+
+    border-top: 1px solid #444444;
+}
+
+.setting-control label {
+    display: block;
+
+    margin-bottom: 8px;
+
+    color: #bbbbbb;
+}
+
+.setting-control input {
+    width: 100px;
+
+    padding: 8px;
+
+    margin-right: 5px;
+
+    border: 1px solid #555555;
+    border-radius: 4px;
+
+    background: #181818;
+    color: #ffffff;
+}
+
+.setting-control button {
+    margin-top: 10px;
+}
+
+
+/* =========================
+   CONTROLLER
+========================= */
+
+.controller {
+    display: flex;
+
+    justify-content: space-between;
+    align-items: center;
+
+    gap: 40px;
+
+    min-height: 200px;
+}
+
+
+/* D-PAD */
+
+.dpad {
+    display: grid;
+
+    grid-template-columns: repeat(3, 50px);
+    grid-template-rows: repeat(3, 50px);
+}
+
+.dpad-up {
+    grid-column: 2;
+    grid-row: 1;
+}
+
+.dpad-left {
+    grid-column: 1;
+    grid-row: 2;
+}
+
+.dpad-down {
+    grid-column: 2;
+    grid-row: 3;
+}
+
+.dpad-right {
+    grid-column: 3;
+    grid-row: 2;
+}
+
+
+/* ACTION BUTTONS */
+
+.action-buttons {
+    display: flex;
+
+    gap: 15px;
+
+    align-items: center;
+}
+
+.action {
+    width: 55px;
+    height: 55px;
+
+    border-radius: 50%;
+
+    font-size: 1.1rem;
+    font-weight: bold;
+}
+
+.action.a {
+    transform: translateY(-20px);
+}
+
+
+/* START / SELECT */
+
+.system-buttons {
+    display: flex;
+    flex-direction: column;
+
+    gap: 10px;
+}
+
+.system {
+    font-size: 0.8rem;
+}
+
+
+/* =========================
+   SERVER PANEL
+========================= */
+
+.server-panel {
+    grid-column: 1 / -1;
+
+    display: flex;
+
+    justify-content: space-between;
+    align-items: center;
+}
+
+.server-panel p {
+    margin: 5px 0;
+
+    color: #aaaaaa;
+}
+
+.server-actions {
+    display: flex;
+    gap: 10px;
+}
+
+
+/* =========================
+   RESPONSIVE
+========================= */
+
+@media (max-width: 800px) {
+
+    .dashboard {
+        grid-template-columns: 1fr;
+    }
+
+    .server-panel {
+        grid-column: auto;
+
+        flex-direction: column;
+        align-items: stretch;
+
+        gap: 20px;
+    }
+
+    .controller {
+        flex-direction: column;
+    }
+
+    .server-actions {
+        flex-direction: column;
+    }
+}

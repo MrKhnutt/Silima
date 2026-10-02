@@ -1,0 +1,296 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>Silima Admin</title>
+
+    <link rel="stylesheet" href="admin.css">
+    <link rel="icon" href="../media/logo/icons/silimaWhite.ico">
+</head>
+
+<body>
+
+    <header class="topbar">
+        <div>
+            <!-- <h1>Silima Admin</h1> -->
+            <h1><img src="../media/logo/silimaLogoWhite.svg" alt="Silima Logo"></h1>
+            <!-- <p>Classroom Controller Administration</p> -->
+        </div>
+
+        <div class="server-status">
+            <span class="status-light online" id="server-status-light"></span>
+            <span id="server-status-text">Server Online</span>
+        </div>
+    </header>
+
+
+    <main class="dashboard">
+
+        <!-- =========================
+             SESSION STATUS
+        ========================== -->
+        <section class="panel session-panel">
+            <h2>Session</h2>
+
+            <div class="stat-row">
+                <span>Connected Students</span>
+                <strong id="student-count">0</strong>
+            </div>
+
+            <div class="stat-row">
+                <span>RetroArch</span>
+                <span class="status-value">
+                    <span class="status-light online"
+                          id="retroarch-status-light"></span>
+                    <span id="retroarch-status">Connected</span>
+                </span>
+            </div>
+
+            <div class="stat-row">
+                <span>WebSocket</span>
+                <span class="status-value">
+                    <span class="status-light online"
+                          id="websocket-status-light"></span>
+                    <span id="websocket-status">Running</span>
+                </span>
+            </div>
+
+            <div class="stat-row">
+                <span>Voting</span>
+                <span class="status-value">
+                    <span class="status-light online"
+                          id="voting-status-light"></span>
+                    <span id="voting-status">Active</span>
+                </span>
+            </div>
+
+            <div class="stat-row">
+                <span>Voting Period</span>
+                <strong>
+                    <span id="current-period">2000</span> ms
+                </strong>
+            </div>
+        </section>
+
+
+        <!-- =========================
+             LIVE VOTING
+        ========================== -->
+        <section class="panel voting-panel">
+            <h2>Live Voting</h2>
+
+            <div class="vote-list" id="vote-list">
+
+                <div class="vote-row" data-input="UP">
+                    <span class="vote-name">UP</span>
+
+                    <div class="vote-bar-container">
+                        <div class="vote-bar"
+                             style="width: 70%">
+                        </div>
+                    </div>
+
+                    <span class="vote-count">11</span>
+                </div>
+
+
+                <div class="vote-row" data-input="LEFT">
+                    <span class="vote-name">LEFT</span>
+
+                    <div class="vote-bar-container">
+                        <div class="vote-bar"
+                             style="width: 45%">
+                        </div>
+                    </div>
+
+                    <span class="vote-count">7</span>
+                </div>
+
+
+                <div class="vote-row" data-input="A">
+                    <span class="vote-name">A</span>
+
+                    <div class="vote-bar-container">
+                        <div class="vote-bar"
+                             style="width: 30%">
+                        </div>
+                    </div>
+
+                    <span class="vote-count">5</span>
+                </div>
+
+
+                <div class="vote-row" data-input="B">
+                    <span class="vote-name">B</span>
+
+                    <div class="vote-bar-container">
+                        <div class="vote-bar"
+                             style="width: 15%">
+                        </div>
+                    </div>
+
+                    <span class="vote-count">2</span>
+                </div>
+
+            </div>
+
+
+            <div class="winner-display">
+                Current Winner:
+                <strong id="current-winner">UP</strong>
+            </div>
+        </section>
+
+
+        <!-- =========================
+             VOTING CONTROLS
+        ========================== -->
+        <section class="panel controls-panel">
+            <h2>Controls</h2>
+
+            <button id="toggle-voting">
+                Pause Voting
+            </button>
+
+            <button id="clear-votes">
+                Clear Votes
+            </button>
+
+            <div class="setting-control">
+                <label for="voting-period">
+                    Voting Period
+                </label>
+
+                <div>
+                    <input
+                        type="number"
+                        id="voting-period"
+                        value="2000"
+                        min="100"
+                        step="100"
+                    >
+
+                    <span>ms</span>
+                </div>
+
+                <button id="apply-period">
+                    Apply
+                </button>
+            </div>
+        </section>
+
+
+        <!-- =========================
+             MANUAL CONTROLLER
+        ========================== -->
+        <section class="panel manual-panel">
+            <h2>Manual Input</h2>
+
+            <div class="controller">
+
+                <div class="dpad">
+                    <button
+                        class="controller-button dpad-up"
+                        data-input="UP">
+                        ↑
+                    </button>
+
+                    <button
+                        class="controller-button dpad-left"
+                        data-input="LEFT">
+                        ←
+                    </button>
+
+                    <button
+                        class="controller-button dpad-down"
+                        data-input="DOWN">
+                        ↓
+                    </button>
+
+                    <button
+                        class="controller-button dpad-right"
+                        data-input="RIGHT">
+                        →
+                    </button>
+                </div>
+
+
+                <div class="action-buttons">
+                    <button
+                        class="controller-button action b"
+                        data-input="B">
+                        B
+                    </button>
+
+                    <button
+                        class="controller-button action a"
+                        data-input="A">
+                        A
+                    </button>
+                </div>
+
+
+                <div class="system-buttons">
+                    <button
+                        class="controller-button system"
+                        data-input="SELECT">
+                        Select
+                    </button>
+
+                    <button
+                        class="controller-button system"
+                        data-input="START">
+                        Start
+                    </button>
+                </div>
+
+            </div>
+        </section>
+
+
+        <!-- =========================
+             SERVER
+        ========================== -->
+        <section class="panel server-panel">
+
+            <div>
+                <h2>Server</h2>
+
+                <p>
+                    Address:
+                    <strong id="server-address">
+                        192.168.1.20:3000
+                    </strong>
+                </p>
+
+                <p>
+                    Silima:
+                    <strong id="silima-version">
+                        v0.1.1
+                    </strong>
+                </p>
+            </div>
+
+            <div class="server-actions">
+                <button id="disconnect-clients">
+                    Disconnect Clients
+                </button>
+
+                <button
+                    class="danger"
+                    id="shutdown-server">
+                    Shut Down Server
+                </button>
+            </div>
+
+        </section>
+
+    </main>
+
+
+    <script src="admin.js"></script>
+
+</body>
+</html>
