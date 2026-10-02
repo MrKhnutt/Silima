@@ -20,6 +20,7 @@ mod JsonHandlers;
 
 pub const SILIMA_BUILD_RS_HASH: &str = env!("BUILD_RS_HASH");
 pub const SILIMA_BUILD_JS_HASH: &str = env!("BUILD_JS_HASH");
+pub const SILIMA_BUILD_AD_HASH: &str = env!("BUILD_AD_HASH");
 pub const SILIMA_BUID_VER: &str = env!("CARGO_PKG_VERSION");
 
 #[tokio::main] // miso framework
@@ -28,26 +29,43 @@ async fn main() {
     println!("♦Silima ver {SILIMA_BUID_VER}:{SILIMA_BUILD_RS_HASH}{SILIMA_BUILD_JS_HASH}");
 
     let localIp = local_ip().unwrap();
+
     println!("Students connect to http://{localIp}:42699");
 
-    let (anaTx, anaRx) = mpsc::channel(32);
+    let (cliTx, cliRx) = mpsc::channel(32);
+    let (admTx, admRx) = mpsc::channel(32);
     let (pollTx, pollRx) = watch::channel::<Option<String>>(None);
     // T is send, R is receive
+    let clientPollRx    = pollRx.clone();
+    let adminPollRx     = pollRx.clone();
 
-    let app =
+     let adminApp =
         Router::new()
             .route("/ws", any(move |wsu: WebSocketUpgrade| {
-                StudentWebsocket::websocket_handler(wsu, anaTx.clone(), pollRx.clone())
+                StudentWebsocket::websocket_handler(wsu, cliTx.clone(), clientPollRx.clone())
             }))
             .fallback_service(ServeDir::new("static"));
+    let clientApp =
+        Router::new()
+            .route("/ws", any(move |wsu: WebSocketUpgrade| {
+                StudentWebsocket::websocket_handler(wsu, admTx.clone(), adminPollRx.clone())
+            }))
+            .fallback_service(ServeDir::new("administration/admin.html"));
 
-    let addr = "0.0.0.0";
-    let port = "42699";
-    let listener = TcpListener::bind(format!("{addr}:{port}"))
+    let clientAddr = "0.0.0.0";
+    let clientPort = "42699";
+
+    let adminAddr = "0.0.0.0";
+    let adminPort = "42614";
+    
+    let clientListener = TcpListener::bind(format!("{clientAddr}:{clientPort}"))
         .await
         .unwrap();
-
-    println!("{}", format!("Listening on ws://{addr}:{port}/ws"));
+    let adminListener = TcpListener::bind(format!("{adminAddr}:{adminPort}"))
+        .await
+        .unwrap();
+        
+    println!("{}", format!("Listening on ws://{clientAddr}:{clientPort}/ws"));
 
     //retroarch network controller
     let raAddr = "127.0.0.1";
@@ -57,11 +75,14 @@ async fn main() {
     tokio::spawn(async move {
         RetroArchHandler::handleRaDemocracy(
             UdpSocket::bind(format!("{raAddr}:0")).await.expect("failed to bind UDP socket"), 
-            format!("{raAddr}:{raPort}"), anaRx, pollTx
+            format!("{raAddr}:{raPort}"), cliRx, pollTx
         ).await
     });
 
-    axum::serve(listener, app)
+    axum::serve(clientListener, clientApp)
+        .await
+        .unwrap();
+    axum::serve(adminListener, adminApp)
         .await
         .unwrap();
 }
