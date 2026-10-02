@@ -17,16 +17,18 @@ use tower_http::services::ServeDir;
 mod StudentWebsocket;
 mod RetroArchHandler;
 mod JsonHandlers;
+mod Networking;
+mod AdminWebsocket;
 
 pub const SILIMA_BUILD_RS_HASH: &str = env!("BUILD_RS_HASH");
 pub const SILIMA_BUILD_JS_HASH: &str = env!("BUILD_JS_HASH");
 pub const SILIMA_BUILD_AD_HASH: &str = env!("BUILD_AD_HASH");
-pub const SILIMA_BUID_VER: &str = env!("CARGO_PKG_VERSION");
+pub const SILIMA_BUILD_VER:      &str = env!("CARGO_PKG_VERSION");
 
 #[tokio::main] // miso framework
 async fn main() {
 
-    println!("♦Silima ver {SILIMA_BUID_VER}:{SILIMA_BUILD_RS_HASH}{SILIMA_BUILD_JS_HASH}");
+    println!("♦Silima ver {SILIMA_BUILD_VER}:{SILIMA_BUILD_RS_HASH}{SILIMA_BUILD_JS_HASH}");
 
     let localIp = local_ip().unwrap();
 
@@ -39,16 +41,16 @@ async fn main() {
     let clientPollRx    = pollRx.clone();
     let adminPollRx     = pollRx.clone();
 
-     let adminApp =
+     let clientApp =
         Router::new()
             .route("/ws", any(move |wsu: WebSocketUpgrade| {
-                StudentWebsocket::websocket_handler(wsu, cliTx.clone(), clientPollRx.clone())
+                Networking::websocketHandler(wsu, cliTx.clone(), clientPollRx.clone(), StudentWebsocket::handleClient)
             }))
             .fallback_service(ServeDir::new("static"));
-    let clientApp =
+    let adminApp =
         Router::new()
             .route("/ws", any(move |wsu: WebSocketUpgrade| {
-                StudentWebsocket::websocket_handler(wsu, admTx.clone(), adminPollRx.clone())
+                Networking::websocketHandler(wsu, admTx.clone(), adminPollRx.clone(), AdminWebsocket::handleClient)
             }))
             .fallback_service(ServeDir::new("administration/admin.html"));
 
