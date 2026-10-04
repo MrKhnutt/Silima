@@ -17,6 +17,8 @@ const wsProtocol = window.location.protocol === "https:" ? "wss:" : "ws:";
 const wsAddress = `${wsProtocol}//${window.location.host}/ws`;
 const ws = new WebSocket(wsAddress);
 
+let userID = 0;
+
 const statusLight = document.getElementById("status-light");
 const statusText = document.getElementById("status-text");
 const serverAddress = document.getElementById("server-address");
@@ -57,8 +59,17 @@ ws.addEventListener("message", (event) => {
             }
             console.log(line);
             break;
+        case "userID":
+            if (userID == 0) {
+                userID = Number(data.value);
+                console.log("User ID", userID, "Recieved from Server");
+                break;
+            } else {
+                // We should panic here, something fishy is going on
+            }
+
         default:
-            console.log("JSON not recognized")
+            console.log("JSON not recognized:", data);
     }
 });
 
@@ -87,6 +98,7 @@ function getButtonFromID(id) {
 function sendSocket(input) {
     // console.log(input);
 
+    if (userID == 0) { return; };
     if (ws.readyState === WebSocket.OPEN) {
         ws.send(input);
     } else {

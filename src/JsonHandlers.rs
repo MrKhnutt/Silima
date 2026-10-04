@@ -26,3 +26,12 @@ pub fn createPollingJson(votes: Vec<(i32,i32)>) -> Result<std::string::String, s
             .collect::<Vec<Vote>>(),
     })
 }
+/// creates a ```JsonPackage``` of type "UserID" for transmitting, value is already
+/// unwrapped
+pub fn assignUserID(userID: u16) -> std::string::String {
+    serde_json::to_string( &JsonPackage {
+        r#type: "userID",
+        msg: "",
+        value: userID
+    }).unwrap()
+}
