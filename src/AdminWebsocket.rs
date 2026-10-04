@@ -10,6 +10,11 @@ use tokio::{
 use serde_json::{Value};
 use futures_util::{SinkExt, StreamExt};
 
+/// Creates a websocket that facilitiates connection between the provided webpage
+/// in ./admin
+/// 
+/// This function is normally provided to ```Networking::websocketHandler``` as the
+/// handler arguement
 pub async fn handleClient(
     socket: WebSocket, 
     tx: mpsc::Sender<String>,
@@ -68,6 +73,8 @@ pub async fn handleClient(
     }}
 }
 
+/// This async function parses recieved input from ```mpsc::Reciever<String>``` rx and processes this
+/// between other **private module functions** within this module
 pub async fn adminMessageParser(
     mut rx: mpsc::Receiver<String>,
     sdTx: watch::Sender<bool>

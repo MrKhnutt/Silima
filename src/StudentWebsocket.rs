@@ -10,6 +10,11 @@ use tokio::{
 // use serde_json::{Value};
 use futures_util::{SinkExt, StreamExt};
 
+/// Creates a websocket that facilitiates connection between the provided webpage
+/// in ./admin
+/// 
+/// This function is normally provided to ```Networking::websocketHandler``` as the
+/// handler arguement
 pub async fn handleClient(
     socket: WebSocket, 
     tx: mpsc::Sender<String>,
