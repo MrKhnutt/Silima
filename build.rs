@@ -13,7 +13,7 @@ fn main() {
     let mut jsHash = Sha256::new();
     let mut adHash = Sha256::new();
 
-    for entry in WalkDir::new("src") {
+    for entry in WalkDir::new("src").sort_by_file_name() {
         match entry {
             Ok(filePath) => {
                 if filePath.file_type().is_file() {
@@ -22,7 +22,7 @@ fn main() {
             }}
             Err(_) => {}
     }};
-    for entry in WalkDir::new("static") {
+    for entry in WalkDir::new("static").sort_by_file_name() {
         match entry {
             Ok(filePath) => {
                 if filePath.file_type().is_file() {
@@ -31,7 +31,7 @@ fn main() {
             }}
             Err(_) => {}
     }};
-    for entry in WalkDir::new("admin") {
+    for entry in WalkDir::new("admin").sort_by_file_name() {
         match entry {
             Ok(filePath) => {
                 if filePath.file_type().is_file() {
