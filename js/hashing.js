@@ -1,6 +1,7 @@
 async function hashFiles() {
     let data;
     const hash = sha256.create();
+    let encoder = new TextEncoder();
 
     try {
         const directory  = await fetch("/client.dir");
@@ -10,15 +11,18 @@ async function hashFiles() {
         return null;
     };
 
-    for (const fileName of data.trim().split("\n").toSorted()) {
+    for (let fileName of data.trim().split(/\r?\n/).toSorted()) {
         try {
-            hash.update(fileName);
-            hash.update(await (await fetch(fileName)).arrayBuffer());
+            let bytes = new Uint8Array(await (await fetch(fileName)).arrayBuffer());
+            fileName = fileName.replace(/^\.?\//, "");
+            console.log(fileName);
+            hash.update(encoder.encode(fileName));
+            hash.update(bytes);
         } catch (err) {
             console.log("Unable to find ", fileName, "\n", err);
             return null;
         }
     };
     
-    return hash.hex();
+    return hash.hex().slice(0,4);
 };
