@@ -1,0 +1,85 @@
+.animated-background {
+    position: fixed;
+    inset: 0;
+    overflow: hidden;
+    z-index: 0;
+    pointer-events: none;
+    background: #111b2b;
+    /* width: 100%; */
+}
+
+.icon-grid {
+    --tile-size: 275px;
+    --scroll-speed: 15s;
+
+    position: absolute;
+    top: 50%;
+    left: 50%;
+
+    /* width: 200%; */
+    /* height: 200%; */
+
+    display: flex;
+    flex-direction: column;
+
+    /* display: grid;
+    grid-auto-rows: var(--tile-size);
+    gap: 0; */
+
+    will-change: transform;
+
+    transform: translate(-50%, -50%) rotate(17deg);
+    /* transform: rotate(-45deg); */
+}
+
+.icon-row {
+    display: flex;
+    flex: none;
+    /* width: max-content; */
+    height: var(--tile-size);
+
+    animation: scroll var(--scroll-speed) linear infinite;
+}
+
+.icon {
+    flex: 0 0 var(--tile-size);
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    /* z-index: 1; */
+
+    /* color: #a2bedc; */
+    opacity: 0.75;
+}
+
+.icon > * {
+    width: 100px;
+    height: 100px;
+    animation: spin 30s linear infinite;
+}
+
+/* Move each row horizontally by one tile */
+@keyframes scroll {
+    from {
+        transform: translateX(0);
+    }
+    to {
+        transform: translateX(calc(-1 * var(--pattern-width)));
+    }
+}
+
+/* Rotate icons independently */
+@keyframes spin {
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .icon-row,
+    .icon > * {
+        animation: none;
+    }
+}
