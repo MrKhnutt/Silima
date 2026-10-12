@@ -15,7 +15,7 @@ async function hashFiles() {
         try {
             let bytes = new Uint8Array(await (await fetch(fileName)).arrayBuffer());
             fileName = fileName.replace(/^\.?\//, "");
-            console.log(fileName);
+            // console.log(fileName);
             hash.update(encoder.encode(fileName));
             hash.update(bytes);
         } catch (err) {
