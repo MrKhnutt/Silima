@@ -9,6 +9,8 @@ const bgPath = "/media/background/";
 const patternCols = Math.ceil(Math.sqrt(icons.length));
 const patternRows = Math.ceil(icons.length / patternCols);
 
+const rotation = Math.random() * 360;
+
 const grid = document.querySelector(".icon-grid");
 
 function buildGrid() {
@@ -31,9 +33,12 @@ function buildGrid() {
 
     grid.style.width = `${width}px`;
     grid.style.height = `${height}px`;
+    
     grid.style.setProperty("--pattern-width", `${patternWidth}px`);
     grid.style.setProperty("--pattern-height", `${patternHeight}px`);
     grid.style.setProperty("--scroll-speed", `${scrollSpeed}s`);
+    document.querySelector(".grid-angle")
+        .style.setProperty("--rotation", `${rotation}deg`);
 
     const fragment = document.createDocumentFragment();
 
