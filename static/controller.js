@@ -17,10 +17,15 @@ const wsProtocol = window.location.protocol === "https:" ? "wss:" : "ws:";
 const wsAddress = `${wsProtocol}//${window.location.host}/ws`;
 const ws = new WebSocket(wsAddress);
 
-let userID = 0;
+const FRAME_RATE = 30;
+const FRAME_TIME = 1000 / FRAME_RATE;
+const BRODCAST_INTERVAL = Math.floor(FRAME_TIME * (2 + Math.random()));
 
-const statusLight = document.getElementById("status-light");
-const statusText = document.getElementById("status-text");
+let userID          = 0;
+let buttonPressed   = null;
+
+const statusLight   = document.getElementById("status-light");
+const statusText    = document.getElementById("status-text");
 const serverAddress = document.getElementById("server-address");
 
 serverAddress.textContent = window.location.host;
@@ -75,6 +80,14 @@ ws.addEventListener("message", (event) => {
     }
 });
 
+const broadcastInterval = setInterval(() => {
+    if (buttonPressed == null) 
+        { return; };
+    sendSocket(buttonPressed);
+    buttonPressed = null;
+    return;
+}, BRODCAST_INTERVAL);
+
 function getButtonFromID(id) {
     switch (id) {
         case 8: return "A";
@@ -108,18 +121,18 @@ function sendInput(input) {
     }
 };
 
-function pressA() { sendInput("A"); }
-function pressB() { sendInput("B"); }
-function pressX() { sendInput("X"); }
-function pressY() { sendInput("Y"); }
-function pressStart() { sendInput("START"); }
-function pressSelect() { sendInput("SELECT"); }
-function pressL() { sendInput("L"); }
-function pressR() { sendInput("R"); }
-function pressUp() { sendInput("UP"); }
-function pressLeft() { sendInput("LEFT"); }
-function pressDown() { sendInput("DOWN"); }
-function pressRight() { sendInput("RIGHT"); }
+function pressA()       { buttonPressed = "A"; }
+function pressB()       { buttonPressed = "B"; }
+function pressX()       { buttonPressed = "X"; }
+function pressY()       { buttonPressed = "Y"; }
+function pressStart()   { buttonPressed = "START"; }
+function pressSelect()  { buttonPressed = "SELECT"; }
+function pressL()       { buttonPressed = "L"; }
+function pressR()       { buttonPressed = "R"; }
+function pressUp()      { buttonPressed = "UP"; }
+function pressLeft()    { buttonPressed = "LEFT"; }
+function pressDown()    { buttonPressed = "DOWN"; }
+function pressRight()   { buttonPressed = "RIGHT"; }
 
 function setup() {
     const buttons = document.querySelectorAll("[data-input]");
