@@ -88,7 +88,7 @@ async fn main() {
             )}))
             .nest_service("/media", ServeDir::new("media"))
             .nest_service("/js", ServeDir::new("js"))
-            .fallback_service(ServeDir::new("static"));
+            .fallback_service(ServeDir::new("client-controller"));
 
     let adminApp =
         Router::new()

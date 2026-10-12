@@ -29,10 +29,10 @@ fn createDirFile(dir: &str, fileNames: &Vec<OsString>) {
 
 fn main() {
     // println!("cargo::rerun-if-changed=src");
-    // println!("cargo::rerun-if-changed=static");
+    // println!("cargo::rerun-if-changed=client-controller");
     // println!("cargo::rerun-if-changed=admin");
 
-    const CLIENT_DIR: &str  = "static";
+    const CLIENT_DIR: &str  = "client-controller";
     const ADMIN_DIR : &str  = "admin";
     const SRC_DIR   : &str  = "src";
 
@@ -55,7 +55,6 @@ fn main() {
     createDirFile(SRC_DIR, &fileNames);
     fileNames.clear();
 
-    // createDirFile("static");
     for entry in WalkDir::new(CLIENT_DIR).sort_by_file_name() {
         match entry {
             Ok(filePath) => {
