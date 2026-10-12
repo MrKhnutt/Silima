@@ -4,7 +4,7 @@ async function hashFiles() {
     let encoder = new TextEncoder();
 
     try {
-        const directory  = await fetch("/client.dir");
+        const directory  = await fetch("/directory.dat");
         data             = await directory.text();
     } catch (err) {
         console.log("Unable to find /client.dir\n", err);
