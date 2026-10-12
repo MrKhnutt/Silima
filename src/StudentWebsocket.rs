@@ -7,11 +7,11 @@ use axum::{
 use tokio::{
     sync::{mpsc, watch},
 };
-// use serde_json::{Value};
+use serde_json::{Value};
 use futures_util::{SinkExt, StreamExt};
 use std::sync::atomic::Ordering;
 
-use crate::{ATOMIC_ID, JsonHandlers};
+use crate::{ATOMIC_ID, JsonHandlers, SILIMA_BUILD_JS_HASH};
 
 /// Creates a websocket that facilitiates connection between the provided webpage
 /// in ./admin
@@ -44,8 +44,44 @@ pub async fn handleClient(
         Some(result) = wsReceiver.next() => {
             match result {
                 Ok(Message::Text(text)) => {
-                    println!("Received: {text}");
-                    let _ = tx.send(text.to_string()).await;  // sends to buffer
+                    let recvJson: Value = match serde_json::from_str(&text) {
+                        Ok(text)    => { text }
+                        Err(_)      => {
+                            // recieved input could not be recognized
+                            println!("Input recieved from {userID} could not be recognized");
+                            continue;
+                        }
+                    };
+                    println!("Received a {} from {}", recvJson["type"], userID);
+                    // let _ = tx.send(text.to_string()).await;  // sends to buffer
+
+                    let recvHash: String = recvJson["hash"].to_string();
+                    if SILIMA_BUILD_JS_HASH != recvHash {
+                        // TODO, inform user client is out of date and dc
+                        println!("Console {userID} is out of date");
+                        // continue;
+                    }
+
+                    // match type of recieved information and process
+                    let _error = match recvJson["type"].as_str() {
+                        Some("input") => {
+                            // TODO create/implement shared state architecture for channel
+                            println!("sending {}", recvJson["value"].to_string());
+                            tx.send(recvJson["value"].to_string())
+                                .await
+                                .map_err(|e| e.to_string())
+                        }
+                        // other input goes here...
+                        Some(unknown) => {
+                            println!("Unrecognized type '{unknown} from {userID}");
+                            Err(format!("Unrecognized type '{unknown} from {userID}").to_string())
+                        }
+                        None =>{
+                            println!("No type decoded from client {userID}");
+                            Err(format!("No type decoded from client {userID}").to_string())
+                        }
+                    };
+
                 }
 
                 Ok(Message::Close(_)) => {
@@ -54,10 +90,13 @@ pub async fn handleClient(
                 }
 
                 // Any other result
-                Ok(_) => {}
+                Ok(_) => { 
+                    println!("Unexpected message from {userID}"); 
+                    break;
+                }
 
                 Err(error) => {
-                    println!("WebSocket error: {error}");
+                    println!("WebSocket error: {error} from {userID}");
                     break;
                 }
             }
