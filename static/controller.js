@@ -66,6 +66,9 @@ ws.addEventListener("message", (event) => {
             } else {
                 // We should panic here, something fishy is going on
             }
+        case "version":
+             versionUpdate(data.value, CLIENT_HASH_PROMISE);
+             break;
 
         default:
             console.log("JSON not recognized:", data);
@@ -128,6 +131,6 @@ function setup() {
 
 setup();
 
-document.addEventListener("DOMContentLoaded", async () => {
-    versionUpdate("0.0.0", await hashFiles());
-});
+// document.addEventListener("DOMContentLoaded", async () => {
+//     versionUpdate("0.0.0", checkHash());
+// });

@@ -38,6 +38,8 @@ pub async fn handleClient(
             }
     }};
 
+    let _ = wsSender.send(Message::Text(JsonHandlers::sendVersion().into())).await;
+
     println!("Client {userID} connected");
 
     loop{ tokio::select! {

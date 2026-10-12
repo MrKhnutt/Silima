@@ -3,6 +3,8 @@
 use serde_json;
 use serde::{Deserialize, Serialize};
 
+use crate::SILIMA_BUILD_VER;
+
 #[derive(Deserialize, Serialize, Debug)]
 struct JsonPackage<'a, T> { r#type: &'a str, msg: &'a str, value: T }
 
@@ -33,5 +35,12 @@ pub fn assignUserID(userID: u16) -> std::string::String {
         r#type: "userID",
         msg: "",
         value: userID
+    }).unwrap()
+}
+pub fn sendVersion() -> std::string::String {
+    serde_json::to_string( &JsonPackage {
+        r#type: "version",
+        msg: "",
+        value: SILIMA_BUILD_VER
     }).unwrap()
 }
