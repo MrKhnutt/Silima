@@ -21,6 +21,7 @@ function buildGrid() {
     
     // Account for the grid being rotated.
     const size = Math.hypot(window.innerWidth, window.innerHeight);
+    const scrollSpeed = 10 * Math.hypot(patternCols, patternRows) / Math.SQRT2;
 
     const width = size + 2 * patternWidth;
     const height = size + 2 * patternHeight;
@@ -32,6 +33,7 @@ function buildGrid() {
     grid.style.height = `${height}px`;
     grid.style.setProperty("--pattern-width", `${patternWidth}px`);
     grid.style.setProperty("--pattern-height", `${patternHeight}px`);
+    grid.style.setProperty("--scroll-speed", `${scrollSpeed}s`);
 
     const fragment = document.createDocumentFragment();
 

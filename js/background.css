@@ -10,7 +10,7 @@
 
 .icon-grid {
     --tile-size: 275px;
-    --scroll-speed: 15s;
+    --scroll-speed: 1s;
 
     position: absolute;
     top: 50%;
