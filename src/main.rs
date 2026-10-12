@@ -87,6 +87,7 @@ async fn main() {
                             StudentWebsocket::handleClient
             )}))
             .nest_service("/media", ServeDir::new("media"))
+            .nest_service("/js", ServeDir::new("js"))
             .fallback_service(ServeDir::new("static"));
 
     let adminApp =
@@ -102,6 +103,7 @@ async fn main() {
                             AdminWebsocket::handleClient
             )}))
             .nest_service("/media", ServeDir::new("media"))
+            .nest_service("/js", ServeDir::new("js"))
             .fallback_service(ServeDir::new("admin"));
 
     let clientListener = TcpListener::bind(format!("{clientAddr}:{clientPort}"))
