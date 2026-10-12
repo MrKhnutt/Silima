@@ -1,4 +1,4 @@
-function createClientJsonStr(type, value, msg) {
+async function createClientJsonStr(type, value, msg) {
 
     // defaulting msg to empty
     var msg = (typeof msg !== undefined) ? msg : "";
@@ -10,7 +10,7 @@ function createClientJsonStr(type, value, msg) {
         "id"    : userID,
         "type"  : type,
         "msg"   : msg,
-        "hash"  : CLIENT_HASH,
+        "hash"  : await CLIENT_HASH_PROMISE,
         "value" : value,
     });
 }

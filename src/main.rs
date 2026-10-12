@@ -129,18 +129,20 @@ async fn main() {
 
     let raControllerParser = tokio::spawn(async move {
         RetroArchHandler::handleRaDemocracy(
-            UdpSocket::bind(format!("{raAddr}:0")).await.expect("failed to bind UDP socket"), 
-            format!("{raAddr}:{raPort}"), cliRx, pollTx
-        )
+            UdpSocket::bind(format!("{raAddr}:0"))
+                .await
+                .expect("failed to bind UDP socket"), 
+            format!("{raAddr}:{raPort}"), 
+                cliRx, 
+                pollTx
+        ).await
     });
     let adminCommandParser = tokio::spawn(async move {
         AdminWebsocket::adminMessageParser(
             admRx,
             shutdownTx.clone()
-        )
+        ).await
     });
-
-    println!("Press Ctrl+c to exit...");
 
     let clientService = 
         axum::serve(clientListener, clientApp)
@@ -154,6 +156,8 @@ async fn main() {
                 shutdownSignal(
                     shutdownRx.clone()
         ));
+
+    println!("Press Ctrl+c to exit...");
 
     let _ = tokio::join!(
         adminService,

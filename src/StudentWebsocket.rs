@@ -65,13 +65,17 @@ pub async fn handleClient(
                     }
 
                     // match type of recieved information and process
-                    let _error = match recvJson["type"].as_str() {
+                    let error = match recvJson["type"].as_str() {
                         Some("input") => {
                             // TODO create/implement shared state architecture for channel
                             println!("sending {}", recvJson["value"].to_string());
-                            tx.send(recvJson["value"].to_string())
-                                .await
-                                .map_err(|e| e.to_string())
+                            tx.send(recvJson["value"]
+                                .as_str()
+                                .unwrap()
+                                .to_string()
+                            )
+                            .await
+                            .map_err(|e| e.to_string())
                         }
                         // other input goes here...
                         Some(unknown) => {
@@ -83,6 +87,12 @@ pub async fn handleClient(
                             Err(format!("No type decoded from client {userID}").to_string())
                         }
                     };
+                    match error {
+                        Ok(_) => {}
+                        Err(e) => {
+                            println!("mpsc failed: {e}");
+                        }
+                    }
 
                 }
 

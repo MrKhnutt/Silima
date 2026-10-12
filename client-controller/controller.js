@@ -83,7 +83,7 @@ ws.addEventListener("message", (event) => {
 const broadcastInterval = setInterval(() => {
     if (buttonPressed == null) 
         { return; };
-    sendSocket(buttonPressed);
+    sendInput(buttonPressed);
     buttonPressed = null;
     return;
 }, BRODCAST_INTERVAL);
@@ -110,12 +110,16 @@ function getButtonFromID(id) {
     }
 }
 
-function sendInput(input) {
+async function sendInput(input) {
     // console.log(input);
 
     if (userID == 0) { return; };
     if (ws.readyState === WebSocket.OPEN) {
-        ws.send(createClientJsonStr("input", input));
+    //     const value = await Promise.all(
+    //         input.map(async (nest) => {
+    //             return await readFile(nest);
+    //     }));
+        ws.send(await createClientJsonStr("input", input));
     } else {
         console.warn(`Cannot send ${input}: WebSocket is not connected`);
     }
