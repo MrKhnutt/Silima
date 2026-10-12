@@ -1,11 +1,3 @@
-@font-face {
-    font-family: "Pixel";
-    src: url("../../media/font/PixelFont7-G02A.ttf") format("ttf");
-    font-weight: normal;
-    font-style: normal;
-    font-display: swap;
-}
-
 .animated-background {
     position: fixed;
     inset: 0;
