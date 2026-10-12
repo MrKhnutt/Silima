@@ -26,3 +26,5 @@ async function hashFiles() {
     
     return hash.hex().slice(0,4);
 };
+
+const CLIENT_HASH = hashFiles();

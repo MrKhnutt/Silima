@@ -95,29 +95,29 @@ function getButtonFromID(id) {
     }
 }
 
-function sendSocket(input) {
+function sendInput(input) {
     // console.log(input);
 
     if (userID == 0) { return; };
     if (ws.readyState === WebSocket.OPEN) {
-        ws.send(input);
+        ws.send(createClientJsonStr("input", input));
     } else {
         console.warn(`Cannot send ${input}: WebSocket is not connected`);
     }
-}
+};
 
-function pressA() { sendSocket("A"); }
-function pressB() { sendSocket("B"); }
-function pressX() { sendSocket("X"); }
-function pressY() { sendSocket("Y"); }
-function pressStart() { sendSocket("START"); }
-function pressSelect() { sendSocket("SELECT"); }
-function pressL() { sendSocket("L"); }
-function pressR() { sendSocket("R"); }
-function pressUp() { sendSocket("UP"); }
-function pressLeft() { sendSocket("LEFT"); }
-function pressDown() { sendSocket("DOWN"); }
-function pressRight() { sendSocket("RIGHT"); }
+function pressA() { sendInput("A"); }
+function pressB() { sendInput("B"); }
+function pressX() { sendInput("X"); }
+function pressY() { sendInput("Y"); }
+function pressStart() { sendInput("START"); }
+function pressSelect() { sendInput("SELECT"); }
+function pressL() { sendInput("L"); }
+function pressR() { sendInput("R"); }
+function pressUp() { sendInput("UP"); }
+function pressLeft() { sendInput("LEFT"); }
+function pressDown() { sendInput("DOWN"); }
+function pressRight() { sendInput("RIGHT"); }
 
 function setup() {
     const buttons = document.querySelectorAll("[data-input]");
