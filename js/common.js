@@ -1,3 +1,4 @@
-function versionUpdate(version, hash) {
-    document.querySelector(".silima-version").innerHTML = "v" + version + ":" + hash;
+async function versionUpdate(version, hash) {
+    let hashStr = await hash;
+    document.querySelector(".silima-version").textContent = "v" + version + ":" + hashStr.toUpperCase();
 }
