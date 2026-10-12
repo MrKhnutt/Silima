@@ -24,7 +24,6 @@ const statusText = document.getElementById("status-text");
 const serverAddress = document.getElementById("server-address");
 
 serverAddress.textContent = window.location.host;
-console.log("Silima Version 0.1b")
 
 ws.addEventListener("open", () => {
     statusText.textContent = "Connected";
@@ -128,3 +127,7 @@ function setup() {
 }
 
 setup();
+
+document.addEventListener("DOMContentLoaded", async () => {
+    versionUpdate("0.0.0", await hashFiles());
+});
