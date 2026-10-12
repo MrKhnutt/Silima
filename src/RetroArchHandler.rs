@@ -18,6 +18,11 @@ const MS_PER_FRAME: u64 = 17;
 const VOTING_PERIOD: u64 = 2000;
 const POLL_ACTIONS_SENT: usize = 4;
 
+/// Takes in an id of the button being pressed, and the state of that
+/// button in the fuction of state. For current purposes, ```state```
+/// acts functionally as a *bool*, but can act as a scaling factor
+/// 
+/// This function returns a transmitable byte string.
 fn ra_packet(id: i32, state: u16) -> [u8; 20] {
     let mut packet = [0u8; 20];
 
@@ -36,6 +41,8 @@ fn ra_packet(id: i32, state: u16) -> [u8; 20] {
     packet
 }
 
+/// This function currently infinently loops to create the mass polling
+/// bheavior of this function
 pub async fn handleRaDemocracy(
     udp: UdpSocket,
     udpAddress: String,

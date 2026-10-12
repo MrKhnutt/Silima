@@ -1,0 +1,21 @@
+@font-face {
+    font-family: Pixel;
+    src: url("../../media/font/PixelFont7-G02A.ttf");
+    font-weight: normal;
+    font-style: normal;
+    font-display: swap;
+}
+
+.silima-version {
+    position: fixed;
+    bottom: 20px;
+    right: 20px;
+    z-index: 99;
+
+    color: white;
+    -webkit-text-stroke: 1px black;
+    text-shadow: -1px 1px 0 black;
+
+    font-family: Pixel;
+    font-size: x-large;
+}

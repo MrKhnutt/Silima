@@ -14,6 +14,8 @@ use tokio::{
 use local_ip_address::local_ip;
 use tower_http::services::ServeDir;
 
+use std::sync::atomic::AtomicU16;
+
 mod StudentWebsocket;
 mod RetroArchHandler;
 mod JsonHandlers;
@@ -24,6 +26,9 @@ pub const SILIMA_BUILD_RS_HASH: &str = env!("BUILD_RS_HASH");
 pub const SILIMA_BUILD_JS_HASH: &str = env!("BUILD_JS_HASH");
 pub const SILIMA_BUILD_VER: &str = env!("CARGO_PKG_VERSION");
 
+pub static ATOMIC_ID: AtomicU16 = AtomicU16::new(1);
+
+/// Transmits a signal to begin the shutdown process for all threads and websockets
 async fn shutdownSignal(
     mut shutdownRx: watch::Receiver<bool>
 ) {

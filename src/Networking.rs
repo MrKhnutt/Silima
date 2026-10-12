@@ -10,6 +10,8 @@ use tokio::{
 };
 // use serde_json::{Value};
 
+/// A simple function that takes in a handler in the style of ```AdminWebsocket::handleClient``` as 
+/// it's main agurement, the websocket is created and handed off to the functional parameter
 pub async fn websocketHandler<FN, FUT>(
     ws: WebSocketUpgrade, 
     tx: mpsc::Sender<String>,
