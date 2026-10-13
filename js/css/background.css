@@ -64,6 +64,7 @@
 
     object-fit: contain;
     /* transform-origin: center center; */
+    --initial-rotation: 0deg;
 
     animation: icon-spin 30s linear infinite;
 }
@@ -89,8 +90,8 @@
 
 /* Rotate icons independently */
 @keyframes icon-spin {
-    from { transform: rotate(0deg); }
-    to   { transform: rotate(360deg); }
+    from { transform: rotate(var(--initial-rotation)); }
+    to   { transform: rotate(calc(var(--initial-rotation) + 360deg)); }
 }
 /* @keyframes spin {
     to {

@@ -1,8 +1,10 @@
 const icons = [
-    "pokemon.svg",
-    "ff14.png",
-    "triforce.png",
-    "mario.webp",
+    "FinalFantasySymbol.svg",
+    "FireEmblemSymbol.svg",
+    "MarioSymbol.svg",
+    "MetroidSymbol.svg",
+    "PokemonSymbol.svg",
+    "ZeldaSymbol.svg",
 ];
 const bgPath = "/media/background/";
 
@@ -58,6 +60,11 @@ function buildGrid() {
                 % icons.length
             ];
             img.alt = "";
+            img.style.setProperty(
+                "--initial-rotation",
+                // `${Math.random() * 360}deg`  // causes looping issues :(
+                `0deg`
+            );
 
             icon.appendChild(img);
             row.appendChild(icon);
