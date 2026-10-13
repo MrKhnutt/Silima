@@ -1,12 +1,12 @@
-const icons = [
-    "FinalFantasySymbol.svg",
-    "FireEmblemSymbol.svg",
-    "MarioSymbol.svg",
-    "MetroidSymbol.svg",
-    "PokemonSymbol.svg",
-    "ZeldaSymbol.svg",
-];
 const bgPath = "/media/background/";
+
+// grab the paths from manifest
+const icons = await fetch(`${bgPath}/manifest.json`)
+    .then(response => response.json())
+    .catch(error => {
+        console.error(error);
+        return [];
+    });
 
 const patternCols = Math.ceil(Math.sqrt(icons.length));
 const patternRows = Math.ceil(icons.length / patternCols);
@@ -15,7 +15,7 @@ const rotation = Math.random() * 360;
 
 const grid = document.querySelector(".icon-grid");
 
-function buildGrid() {
+async function buildGrid() {
     const tileSize = parseFloat(
         getComputedStyle(grid).getPropertyValue("--tile-size")
     );
@@ -33,6 +33,7 @@ function buildGrid() {
     const columns = Math.ceil((width + patternWidth) / tileSize);
     const rows = Math.ceil(height / tileSize);
 
+    // set bounds
     grid.style.width = `${width}px`;
     grid.style.height = `${height}px`;
     
@@ -42,6 +43,7 @@ function buildGrid() {
     document.querySelector(".grid-angle")
         .style.setProperty("--rotation", `${rotation}deg`);
 
+    // create grid
     const fragment = document.createDocumentFragment();
 
     for (let y = 0; y < rows; y++) {

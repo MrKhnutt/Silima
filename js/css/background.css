@@ -66,6 +66,9 @@
     /* transform-origin: center center; */
     --initial-rotation: 0deg;
 
+    filter: brightness(0);  /* black */
+    opacity: 0.75;
+
     animation: icon-spin 30s linear infinite;
 }
 

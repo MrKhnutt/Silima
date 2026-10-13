@@ -28,19 +28,22 @@ fn createDirFile(dir: &str, fileNames: &Vec<OsString>) {
 }
 
 fn main() {
-    // println!("cargo::rerun-if-changed=src");
-    // println!("cargo::rerun-if-changed=client-controller");
-    // println!("cargo::rerun-if-changed=admin");
-
+    const SRC_DIR   : &str  = "src";
     const CLIENT_DIR: &str  = "client-controller";
     const ADMIN_DIR : &str  = "admin";
-    const SRC_DIR   : &str  = "src";
+    const BG_DIR    : &str  = "media/background";
+
+    println!("cargo::rerun-if-changed={SRC_DIR}");
+    println!("cargo::rerun-if-changed={CLIENT_DIR}");
+    println!("cargo::rerun-if-changed={ADMIN_DIR}");
+    println!("cargo::rerun-if-changed={BG_DIR}");
 
 
     let mut rsHash = blake3::Hasher::new();
     let mut jsHash = Sha256::new();
     let mut adHash = Sha256::new();
         
+    // Rust Source Code Hash
     let mut fileNames: Vec<OsString> = Vec::new();
     for entry in WalkDir::new(SRC_DIR).sort_by_file_name() {
         match entry {
@@ -55,6 +58,7 @@ fn main() {
     createDirFile(SRC_DIR, &fileNames);
     fileNames.clear();
 
+    // client-controller Hash
     for entry in WalkDir::new(CLIENT_DIR).sort_by_file_name() {
         match entry {
             Ok(filePath) => {
@@ -68,6 +72,7 @@ fn main() {
     // createDirFile(CLIENT_DIR, &fileNames);
     fileNames.clear();
 
+    // Admin page Hash
     for entry in WalkDir::new(ADMIN_DIR).sort_by_file_name() {
         match entry {
             Ok(filePath) => {
@@ -80,6 +85,23 @@ fn main() {
     }};
     createDirFile(ADMIN_DIR, &fileNames);
     fileNames.clear();
+
+    // scrolling background manifest
+        // vvv this took like, 2 hours
+    fs::write(
+        format!("{BG_DIR}/manifest.json"),
+        serde_json::to_string(
+            &std::fs::read_dir("media/background")
+                .expect("failed to find directory")
+                .filter_map(Result::ok)
+                .filter(|entry| 
+                        entry.path().extension().is_some_and(|ext| ext == "svg"))
+                .filter_map(|entry| 
+                        entry.file_name().into_string().ok())
+                .collect::<Vec<String>>()
+            ).expect("failed to serialize manifest.json")
+        )
+        .expect("failed to write to file");
 
     println!(
         "cargo::rustc-env=BUILD_RS_HASH={}", 

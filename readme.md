@@ -59,6 +59,10 @@
 - ⬜ Frame-per-Action Toggle
 - ⬜ Config Work
 
+### Misc
+
+- ⬜ Script to Normalize SVGs (Python?)
+
 ## Technologies Used
 
 <!-- ## Requirements -->
