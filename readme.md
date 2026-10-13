@@ -12,15 +12,16 @@
         - ⬜ Anarchy
         - ✅ Democracy
     - ⬜ Game Mode Voting
-    - ⬜ Spam Protection
+    - 🔨 Spam Protection
     - ✅ Polling Behavior Broadcast
 - ⏸️ Websocket Lifecycle
 - ⬜ Anonymous IP Binding
-- ⬜ Vote Resolution
+- 🔨 Vote Resolution
 - ⬜ Networking Controller Binding
-- ✅ Build Hashing
-- ⬜ Build Sync
+- 🔨 Build Hashing and directory manifest
+- 🔨 Build Sync
 - ⬜ JS Hash Query Strings for Cache Updates
+- 🔨 Build.rs hash comparison for for manifest updates
 
 ### Client UI
 
@@ -46,7 +47,7 @@
 
 ### Administration
 
-- ⬜ Administration Page
+- 🔨 Administration Page
 - ⬜ Lockable Controls
 - ⬜ Game Mode Toggle
 - ⬜ Theme Selection
