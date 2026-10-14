@@ -4,14 +4,19 @@ async function hashFiles() {
     let encoder = new TextEncoder();
 
     try {
-        const directory  = await fetch("/directory.dat");
-        data             = await directory.text();
+        const directory  = await fetch("/manifest.json")
+                            .then(response => response.json())
+                            .catch(error => {
+                                console.error(error);
+                                return [];
+                            });
+        data             = await directory.files;
     } catch (err) {
         console.log("Unable to find /client.dir\n", err);
         return null;
     };
 
-    for (let fileName of data.trim().split(/\r?\n/).toSorted()) {
+    for (let fileName of data.toSorted()) {
         try {
             let bytes = new Uint8Array(await (await fetch(fileName)).arrayBuffer());
             fileName = fileName.replace(/^\.?\//, "");
