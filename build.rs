@@ -1,30 +1,121 @@
 #![allow(non_snake_case)]
+#![allow(dead_code)]
 
-// use std::{fs, os::unix::ffi::OsStrExt};
-use blake3;
-use walkdir::WalkDir;
 use sha2::{Digest, Sha256};
 use std::{
-    ffi::{OsString}, 
     fs, 
-    os::unix::ffi::OsStrExt,
+    io::Read,
 };
 
-
-
-fn createDirFile(dir: &str, fileNames: &Vec<OsString>) {
+enum Extensions {
+    One(String),
+    Many(Vec<String>),
+}
+struct ManifestOptions {
+    save    : bool,
+    rerun   : bool,
+    hash    : bool,
+    write   : bool,
     
-    let testString: String = 
-        fileNames.iter()
-            .map(|name| format!("/{}", name.to_string_lossy()))
-            .collect::<Vec<_>>()
-            .join("\n");
+    filter  : Option<Extensions>,
+} impl Default for ManifestOptions {
+    fn default() -> Self {
+        Self {
+            save    : true,
+            rerun   : true,
+            hash    : true,
+            write   : true,
 
-    fs::write(format!("{dir}/directory.dat"), testString)
-        // .unwrap()
-        .expect("failed to write to file");
+            filter : None,
+        }
+    }
+}
 
-    // };
+fn createManifest(dir: &str, config: ManifestOptions) -> Result<String, std::io::Error>{
+    const KB        : usize    = 8192;
+    let hashHex     : String;
+
+    // collect all files
+    let mut fileNames = std::fs::read_dir(dir)
+        .expect("failed to find directory")
+        .filter_map(Result::ok)
+        .filter_map(|entry| 
+                entry.file_name().into_string().ok())
+        .collect::<Vec<String>>();
+
+    // filter out unwanted files
+    match config.filter {
+        // keep only the files with extension X
+        Some(Extensions::One(value)) => {
+            fileNames = fileNames
+                .into_iter()
+                .filter(|entry| entry.contains(&value))
+                .collect();
+        }
+        // remove the files that have extensions X, Y and Z
+        Some(Extensions::Many(values)) => {
+            for ext in &values {
+                fileNames = fileNames
+                    .into_iter()
+                    .filter(|entry| !entry.contains(ext))
+                    .collect();
+            };
+        }
+        // do nothing
+        None => {}
+    };
+    fileNames.sort();
+    
+    // hash all files
+    if config.hash {
+        let mut hash = Sha256::new();
+
+        for file in &fileNames {
+            let mut byteBuffer = [0u8; KB];
+                let mut bytes = 
+                        fs::File::open(
+                            std::path::Path::new(dir).join(file)
+                        )?;
+            loop {
+                let bytesRead = bytes.read(&mut byteBuffer)?;
+                // file name THEN contents
+                hash.update(file.as_bytes());
+                hash.update(byteBuffer);
+                if bytesRead == 0 
+                    // EOF
+                    { break; }
+            };
+        };
+        // keep 4 characters
+        hashHex = hex::encode(hash.finalize())[..4].to_string();
+    } else 
+    // No hash generated
+    { hashHex = "".to_string(); }
+
+    // setup system variables
+    if config.rerun
+        { println!("cargo::rerun-if-changed={dir}"); }
+    if config.save && config.hash {
+        println!(
+            "cargo::rustc-env=BUILD_{}_HASH={}",
+            dir.to_uppercase(),
+            hashHex,
+        );
+    }
+
+    // write manifest
+    if config.write {
+        let manifest = serde_json::json!({
+            "hash"  :   hashHex,
+            "files" :   fileNames,
+        });
+        fs::write(
+            format!("{dir}/manifest.json"),
+            manifest.to_string()
+        )?;
+    };
+    // return that it worked
+    Ok(hashHex.to_string())
 }
 
 fn main() {
@@ -33,86 +124,40 @@ fn main() {
     const ADMIN_DIR : &str  = "admin";
     const BG_DIR    : &str  = "media/background";
 
-    println!("cargo::rerun-if-changed={SRC_DIR}");
-    println!("cargo::rerun-if-changed={CLIENT_DIR}");
-    println!("cargo::rerun-if-changed={ADMIN_DIR}");
-    println!("cargo::rerun-if-changed={BG_DIR}");
-
-
-    let mut rsHash = blake3::Hasher::new();
-    let mut jsHash = Sha256::new();
-    let mut adHash = Sha256::new();
-        
-    // Rust Source Code Hash
-    let mut fileNames: Vec<OsString> = Vec::new();
-    for entry in WalkDir::new(SRC_DIR).sort_by_file_name() {
-        match entry {
-            Ok(filePath) => {
-                if filePath.file_type().is_file() {
-                    fileNames.push(filePath.file_name().to_os_string());
-                    rsHash.update(filePath.file_name().as_bytes());
-                    rsHash.update(&fs::read(filePath.path()).unwrap());
-            }}
-            Err(_) => {}
-    }};
-    createDirFile(SRC_DIR, &fileNames);
-    fileNames.clear();
-
-    // client-controller Hash
-    for entry in WalkDir::new(CLIENT_DIR).sort_by_file_name() {
-        match entry {
-            Ok(filePath) => {
-                if filePath.file_type().is_file() {
-                    fileNames.push(filePath.file_name().to_os_string());
-                    jsHash.update(filePath.file_name().as_bytes());
-                    jsHash.update(&fs::read(filePath.path()).unwrap());
-            }}
-            Err(_) => {}
-    }};
-    // createDirFile(CLIENT_DIR, &fileNames);
-    fileNames.clear();
-
-    // Admin page Hash
-    for entry in WalkDir::new(ADMIN_DIR).sort_by_file_name() {
-        match entry {
-            Ok(filePath) => {
-                if filePath.file_type().is_file() {
-                    fileNames.push(filePath.file_name().to_os_string());
-                    adHash.update(filePath.file_name().as_bytes());
-                    adHash.update(&fs::read(filePath.path()).unwrap());
-            }}
-            Err(_) => {}
-    }};
-    createDirFile(ADMIN_DIR, &fileNames);
-    fileNames.clear();
-
-    // scrolling background manifest
-        // vvv this took like, 2 hours
-    fs::write(
-        format!("{BG_DIR}/manifest.json"),
-        serde_json::to_string(
-            &std::fs::read_dir("media/background")
-                .expect("failed to find directory")
-                .filter_map(Result::ok)
-                .filter(|entry| 
-                        entry.path().extension().is_some_and(|ext| ext == "svg"))
-                .filter_map(|entry| 
-                        entry.file_name().into_string().ok())
-                .collect::<Vec<String>>()
-            ).expect("failed to serialize manifest.json")
-        )
-        .expect("failed to write to file");
-
-    println!(
-        "cargo::rustc-env=BUILD_RS_HASH={}", 
-        &rsHash.finalize().to_hex().to_string()[..4]
-    );
-    println!(
-        "cargo::rustc-env=BUILD_JS_HASH={}", 
-        &hex::encode(jsHash.finalize())[..4]
-    );
-    println!(
-        "cargo::rustc-env=BUILD_AD_HASH={}", 
-        &hex::encode(adHash.finalize())[..4]
-    );
+    match createManifest(SRC_DIR, ManifestOptions { 
+        write: false,
+        ..Default::default()
+    }){
+        Ok(_) => {}
+        Err(e) => {
+            println!("cargo::error=Manifest failed on {SRC_DIR}: {e}");
+        }
+    };
+    match createManifest(CLIENT_DIR, ManifestOptions { 
+        ..Default::default()
+    }){
+        Ok(_) => {}
+        Err(e) => {
+            println!("cargo::error=Manifest failed on {CLIENT_DIR}: {e}");
+        }
+    };
+    match createManifest(ADMIN_DIR, ManifestOptions { 
+        ..Default::default()
+    }){
+        Ok(_) => {}
+        Err(e) => {
+            println!("cargo::error=Manifest failed on {ADMIN_DIR}: {e}");
+        }
+    };
+    match createManifest(BG_DIR, ManifestOptions {
+        save    : false,
+        hash    : false,
+        filter  : Some(Extensions::One("svg".to_string())),
+        ..Default::default()
+    }){
+        Ok(_) => {}
+        Err(e) => {
+            println!("cargo::error=Manifest failed on {BG_DIR}: {e}");
+        }
+    };
 }

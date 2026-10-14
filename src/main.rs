@@ -22,8 +22,8 @@ mod JsonHandlers;
 mod Networking;
 mod AdminWebsocket;
 
-pub const SILIMA_BUILD_RS_HASH: &str = env!("BUILD_RS_HASH");
-pub const SILIMA_BUILD_JS_HASH: &str = env!("BUILD_JS_HASH");
+pub const SILIMA_BUILD_RS_HASH: &str = env!("BUILD_SRC_HASH");
+pub const SILIMA_BUILD_JS_HASH: &str = env!("BUILD_CLIENT-CONTROLLER_HASH");
 pub const SILIMA_BUILD_VER: &str = env!("CARGO_PKG_VERSION");
 
 pub static ATOMIC_ID: AtomicU16 = AtomicU16::new(1);
@@ -53,7 +53,7 @@ async fn shutdownSignal(
 #[tokio::main] // miso framework
 async fn main() {
 
-    println!("♦Silima ver {SILIMA_BUILD_VER}:{SILIMA_BUILD_RS_HASH}{SILIMA_BUILD_JS_HASH}");
+    // println!("♦Silima ver {SILIMA_BUILD_VER}:{SILIMA_BUILD_RS_HASH}{SILIMA_BUILD_JS_HASH}");
 
     // **IP ADDRESSES**
     let localIp = local_ip().unwrap();
