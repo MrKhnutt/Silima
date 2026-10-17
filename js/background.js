@@ -1,13 +1,12 @@
 const bgPath = "/media/background/";
 
 // grab the paths from manifest
-const manifest = await fetch(`${bgPath}manifest.json`)
+const icons = await fetch(`${bgPath}/manifest.json`)
     .then(response => response.json())
     .catch(error => {
         console.error(error);
         return [];
     });
-const icons = manifest.files.sort(() => 0 <= Math.random() - 0.5);
 
 const patternCols = Math.ceil(Math.sqrt(icons.length));
 const patternRows = Math.ceil(icons.length / patternCols);
