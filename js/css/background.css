@@ -64,7 +64,7 @@
 
     object-fit: contain;
     /* transform-origin: center center; */
-    --initial-rotation: 0deg;
+    --initial-rotation: 180deg;
 
     filter: brightness(0);  /* black */
     opacity: 0.75;
