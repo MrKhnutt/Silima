@@ -13,7 +13,6 @@ const patternCols = Math.ceil(Math.sqrt(icons.length));
 const patternRows = Math.ceil(icons.length / patternCols);
 
 const rotation = Math.random() * 360;
-const theta = rotation * Math.PI / 180;
 
 const grid = document.querySelector(".icon-grid");
 
@@ -22,23 +21,15 @@ async function buildGrid() {
         getComputedStyle(grid).getPropertyValue("--tile-size")
     );
 
-    const patternWidth =
-        Math.abs(window.innerWidth * Math.cos(theta)) +
-        Math.abs(window.innerHeight * Math.sin(theta));
-
-    const patternHeight =
-        Math.abs(window.innerWidth * Math.sin(theta)) +
-        Math.abs(window.innerHeight * Math.cos(theta));
-
-    // const patternWidth = patternCols * tileSize;
-    // const patternHeight = patternRows * tileSize;
+    const patternWidth = patternCols * tileSize;
+    const patternHeight = patternRows * tileSize;
     
     // Account for the grid being rotated.
     const size = Math.hypot(window.innerWidth, window.innerHeight);
     const scrollSpeed = 10 * Math.hypot(patternCols, patternRows) / Math.SQRT2;
 
-    const width = size * patternWidth;
-    const height = size * patternHeight;
+    const width = size + 2 * patternWidth;
+    const height = size + 2 * patternHeight;
 
     const columns = Math.ceil((width + patternWidth) / tileSize);
     const rows = Math.ceil(height / tileSize);
