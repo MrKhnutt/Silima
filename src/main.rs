@@ -82,7 +82,7 @@ async fn main() {
     // T is send, R is receive
 
     let (clTx, clSd) = (bcTx.clone(), sdToken.clone());
-    let clientApp =
+    let clientController =
         Router::new()
             .route(
                 "/ws", 
@@ -95,8 +95,8 @@ async fn main() {
                             StudentWebsocket::handleClient
             )}))
             .nest_service("/media", ServeDir::new("media"))
-            .nest_service("/js", ServeDir::new("js"))
-            .fallback_service(ServeDir::new("client-controller"));
+            .nest_service("/frontend", ServeDir::new("frontend"))
+            .fallback_service(ServeDir::new("static/client-controller"));
 
     let (adTx, adSd) = (bcTx.clone(), sdToken.clone());
     let adminApp =
@@ -112,8 +112,8 @@ async fn main() {
                             AdminWebsocket::handleClient
             )}))
             .nest_service("/media", ServeDir::new("media"))
-            .nest_service("/js", ServeDir::new("js"))
-            .fallback_service(ServeDir::new("admin"));
+            .nest_service("/frontend", ServeDir::new("frontend"))
+            .fallback_service(ServeDir::new("static/admin"));
 
     let clientListener = TcpListener::bind(format!("{clientAddr}:{clientPort}"))
         .await
@@ -156,7 +156,7 @@ async fn main() {
     });
 
     let clientService = 
-        axum::serve(clientListener, clientApp)
+        axum::serve(clientListener, clientController)
             .with_graceful_shutdown(
                 shutdownSignal(sdToken.clone()));
 
@@ -168,9 +168,9 @@ async fn main() {
     println!("Press Ctrl+c to exit...");
 
     let _ = tokio::join!(
-        adminService,
-        clientService,
-        raControllerParser,
-        adminCommandParser,
+        adminService,           // Admin served webpage
+        clientService,          // Client Controller
+        raControllerParser,     // Parser for Controller Echoing
+        adminCommandParser,     // Parser for Admin input? Redundant?
     );
 }
