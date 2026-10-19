@@ -46,6 +46,7 @@ async function buildGrid() {
 
     // create grid
     const fragment = document.createDocumentFragment();
+    let rotationMap = new Map();    // effectivly seeding rotation
 
     for (let y = 0; y < rows; y++) {
         const row = document.createElement("div");
@@ -63,10 +64,16 @@ async function buildGrid() {
                 % icons.length
             ];
             img.alt = "";
+
+            // set the initial rotation vector for randomized icons
+            if (!rotationMap.has(img.src) && img.src != undefined) { 
+                rotationMap.set(img.src, Math.random() * 360); 
+                // console.log(img.src, ":", rotationMap.get(img.src));
+            }
+
             img.style.setProperty(
                 "--initial-rotation",
-                // `${Math.random() * 360}deg`  // causes looping issues :(
-                `0deg`
+                `${rotationMap.get(img.src)}deg`
             );
 
             icon.appendChild(img);
@@ -78,6 +85,29 @@ async function buildGrid() {
 
     grid.replaceChildren(fragment);
 }
+
+function complementaryColor(source, target = source) {
+    const color = getComputedStyle(source).backgroundColor;
+
+    target.style.backgroundColor = `hsl(from ${color} calc(h + 180) s l / alpha)`;
+
+    console.log(target.style.backgroundColor)
+    
+}
+
+function initialColor(target) {
+    const color = getComputedStyle(target).backgroundColor;
+
+    target.style.backgroundColor = `hsl(from ${color} calc(h + ${Math.random() * 360}) s l / alpha)`;
+}
+
+initialColor(
+    document.querySelector(".animated-background"),
+);
+// complementaryColor(
+//     document.querySelector(".animated-background"),
+//     document.querySelector(".menubar")
+// );
 
 buildGrid();
 window.addEventListener("resize", buildGrid);
