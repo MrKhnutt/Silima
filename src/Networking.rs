@@ -6,32 +6,35 @@ use axum::{
     response::Response,
 };
 use tokio::{
-    sync::{mpsc, watch},
+    sync::{broadcast},
 };
+use tokio_util::sync::CancellationToken;
+
+use crate::SilEvent;
 // use serde_json::{Value};
 
 /// A simple function that takes in a handler in the style of ```AdminWebsocket::handleClient``` as 
 /// it's main agurement, the websocket is created and handed off to the functional parameter
 pub async fn websocketHandler<FN, FUT>(
     ws: WebSocketUpgrade, 
-    tx: mpsc::Sender<String>,
-    pollTx: watch::Receiver<Option<String>>,
-    handles: FN
+    bcTx    : broadcast::Sender<SilEvent>,
+    token   : CancellationToken,
+    handles : FN
 ) -> Response 
     where
         FN: Fn(
             WebSocket,
-            mpsc::Sender<String>,
-            watch::Receiver<Option<String>>
+            CancellationToken,
+            broadcast::Sender<SilEvent>
 ) -> FUT + Send + 'static, 
      FUT: Future<Output = ()> + Send + 'static, {
     println!("Request Received");
     // HTTP request
     ws.on_upgrade(move |ws: WebSocket| {
         handles(
-            ws, 
-            tx.clone(), 
-            pollTx.clone()
+            ws,         // websocket
+            token,      // cancellation token
+            bcTx        // broadcast channel
         )
     })
 }

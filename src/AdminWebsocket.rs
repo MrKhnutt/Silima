@@ -4,11 +4,18 @@
 use axum::{
     extract::ws::{Message, WebSocket},
 };
-use tokio::{
-    sync::{mpsc, watch,}
-};
+use tokio::sync::{broadcast};
 use serde_json::{Value};
 use futures_util::{SinkExt, StreamExt};
+use tokio_util::sync::CancellationToken;
+
+// use crate::Input;
+use crate::{
+    // ATOMIC_ID, 
+    // JsonHandlers, 
+    // SILIMA_BUILD_JS_HASH, 
+    SilEvent,
+};
 
 /// Creates a websocket that facilitiates connection between the provided webpage
 /// in ./admin
@@ -16,59 +23,70 @@ use futures_util::{SinkExt, StreamExt};
 /// This function is normally provided to ```Networking::websocketHandler``` as the
 /// handler arguement
 pub async fn handleClient(
-    socket: WebSocket, 
-    tx: mpsc::Sender<String>,
-    mut rx: watch::Receiver<Option<String>>
+    socket  : WebSocket, 
+    token   : CancellationToken,
+    bcTx    : broadcast::Sender<SilEvent>
 ){
     println!("Admin connected");
 
     let (
-        mut wsSender, // Messages TO the student
-        mut wsReceiver    // Messages FROM the student
+        mut wsSender, // Messages TO the admin
+        mut wsReceiver    // Messages FROM the admin
     ) = socket.split();
+    let mut bcRx = bcTx.subscribe();
+
 
     loop{ tokio::select! {
         Some(result) = wsReceiver.next() => {
             match result {
-                Ok(Message::Text(text)) => {
-                    println!("Received: {text}");
-                    let _ = tx.send(text.to_string()).await;  // sends to buffer
+                Ok(Message::Text(jsonString)) => {
+                    // let _ = bcTx.send(SilEvent::AdminMessage(text.to_string()));  // sends to buffer
+                    let jsonMsg: Value = serde_json::from_str(&jsonString).unwrap();
+                    // get the type of transmitted message
+                    match jsonMsg.get("type").and_then(|v| v.as_str()) {
+                        Some("admin_connected") => { println!("Admin Received") },
+                        Some("shutdown") => { 
+                            token.cancel();
+                        },
+                        Some(unknown) => { println!("Unknown type received from Admin: {unknown}"); },
+                        None => { continue; }
+                    };
                 }
-
                 Ok(Message::Close(_)) => {
                     println!("Client disconnected");
+                    token.cancel();
                     break;
                 }
-
                 // Any other result
                 Ok(_) => {}
-
                 Err(error) => {
                     println!("WebSocket error: {error}");
+                    token.cancel();
                     break;
                 }
             }
         }
-        _ = rx.changed() => {
-
-            // update to send json stats
-            let jsonStr = rx.borrow().clone();
-            match jsonStr {
-                Some(msg) => {
-                    wsSender.send(Message::Text(
-                        msg.into()
-                        ))
-                        .await
-                        .unwrap();
-                    }
-                None    => {
-                    wsSender.send(Message::Text(
-                        "Error".into()
-                        ))
-                    .await
-                    .unwrap();
-                    }
+        // recieved broadcast
+        Ok(result) = bcRx.recv() => {
+            match result {
+                SilEvent::ClientConnected(_)            => {}
+                SilEvent::ClientDisconnected(_)         => {}
+                SilEvent::Input(_)                      => {}
+                SilEvent::PollUpdate(pollJson)          => {
+                    let _ = wsSender.send(Message::Text(
+                        pollJson.into()
+                    )).await;
                 }
+                SilEvent::AdminMessage(_)               => {}
+                SilEvent::ClientError(_,_)              => {}
+                SilEvent::ShutdownSignal(_)             => {
+                    token.cancel();
+                    break;
+                }
+            }
+        }
+        _ = token.cancelled() => {
+            break;
         }
     }}
 }
@@ -76,31 +94,28 @@ pub async fn handleClient(
 /// This async function parses recieved input from ```mpsc::Reciever<String>``` rx and processes this
 /// between other **private module functions** within this module
 pub async fn adminMessageParser(
-    mut rx: mpsc::Receiver<String>,
-    sdTx: watch::Sender<bool>
+    bcTx    : broadcast::Sender<SilEvent>,
+    token   : CancellationToken
 ) {
-    let mut sdTx = Some(sdTx);
-    loop {
-        tokio::select! {
-            message = rx.recv() => {
-                // println!("{:?}", message);
-                let msg: Value = match message {
-                    Some(msg) => {
-                        serde_json::from_str(&msg).unwrap()
-                    },
-                    None => continue,
-                };
-                match msg.get("type").and_then(|v| v.as_str()) {
-                    Some("admin_connected") => { println!("Admin Received") },
-                    Some("shutdown") => { 
-                        // println!("boop");
-                        if let Some(tx) = sdTx.take() 
-                            { let _ = tx.send(true); } 
-                        },
-                    Some(unknown) => { println!("Unknown type received from Admin: {unknown}"); },
-                    None => { continue; }
-                };
+    let mut bcRx = bcTx.subscribe();
+
+    loop { tokio::select! {
+        Ok(result) = bcRx.recv() => {
+            match result {
+                SilEvent::ClientConnected(_)            => {}
+                SilEvent::ClientDisconnected(_)         => {}
+                SilEvent::Input(_)                      => {}
+                SilEvent::PollUpdate(_)                 => {}
+                SilEvent::AdminMessage(_)               => {}
+                SilEvent::ClientError(_,_)              => {}
+                SilEvent::ShutdownSignal(_)             => {
+                    token.cancel();
+                    break;
+                }
             }
         }
-    }
+        _ = token.cancelled() => {
+            break;
+        }
+    }}
 }

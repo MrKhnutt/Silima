@@ -8,8 +8,9 @@ use axum::{
 };
 use tokio::{
     net::{TcpListener, UdpSocket},
-    sync::{mpsc, watch,},
+    sync::{broadcast,},
 };
+use tokio_util::sync::CancellationToken;
 // use serde_json::{json, Value};
 use local_ip_address::local_ip;
 use tower_http::services::ServeDir;
@@ -26,28 +27,37 @@ pub const SILIMA_BUILD_RS_HASH: &str = env!("BUILD_SRC_HASH");
 pub const SILIMA_BUILD_JS_HASH: &str = env!("BUILD_CLIENT-CONTROLLER_HASH");
 pub const SILIMA_BUILD_VER: &str = env!("CARGO_PKG_VERSION");
 
+const CAPACITY      : usize     = 32;
+
 pub static ATOMIC_ID: AtomicU16 = AtomicU16::new(1);
+
+#[derive(Clone)]
+struct Input {
+    clientId    : u16,      ////// Atomic Client Id
+    input       : String    ////// The Input
+}
+
+#[derive(Clone)]
+enum SilEvent {
+    ClientConnected(u16),       // u64 of the Client Connection
+    ClientDisconnected(u16),    // u64 of the Client Disconnection
+    Input(Input),               // Controller Input
+    PollUpdate(String),       // Vector of Controller Input Counts
+    AdminMessage(String),       // 
+    ClientError(u16, String),   //
+    ShutdownSignal(bool),       //
+}
 
 /// Transmits a signal to begin the shutdown process for all threads and websockets
 async fn shutdownSignal(
-    mut shutdownRx: watch::Receiver<bool>
+    sdToken         :   CancellationToken
 ) {
-    // let result = shutdownRx.wait_for(|value| *value).await;
-    // println!("shutdownSignal ended: {:?}", result);
-    // loop {
         tokio::select! {
-            _ = tokio::signal::ctrl_c() => {}
-            msg = shutdownRx.wait_for(|value| *value) => {
-                println!("{:?}", msg);
-            }
+            _ = tokio::signal::ctrl_c() => { sdToken.cancel(); }
+            _ = sdToken.cancelled()     => { sdToken.cancel(); }
     }
-    // tokio::signal::ctrl_c()
-    //     .await
-    //     .expect("failed to listen for Ctrl+C");
 
     println!("Shutting down Silima...");
-    // TODO add RA final release logic
-    // Notify clients?
 }
 
 #[tokio::main] // miso framework
@@ -66,15 +76,13 @@ async fn main() {
     println!("Students connect to http://{localIp}:{clientPort}");
     println!("Admin connect to http://{localIp}:{adminPort}");
 
-    let (cliTx, cliRx) = mpsc::channel(32);
-    let (admTx, admRx) = mpsc::channel(32);
-    let (shutdownTx, shutdownRx) = watch::channel::<bool>(false);
-    let (pollTx, pollRx) = watch::channel::<Option<String>>(None);
+    let sdToken = CancellationToken::new();
+    let (bcTx, _bcRx) = broadcast::channel(CAPACITY);
+    // let (pollTx, pollRx) = watch::channel::<Option<String>>(None);
     // T is send, R is receive
-    let clientPollRx    = pollRx.clone();
-    let adminPollRx     = pollRx.clone();
 
-     let clientApp =
+    let (clTx, clSd) = (bcTx.clone(), sdToken.clone());
+    let clientApp =
         Router::new()
             .route(
                 "/ws", 
@@ -82,14 +90,15 @@ async fn main() {
                     move |wsu: WebSocketUpgrade| {
                         Networking::websocketHandler(
                             wsu,
-                            cliTx.clone(),
-                            clientPollRx.clone(),
+                            clTx,
+                            clSd,
                             StudentWebsocket::handleClient
             )}))
             .nest_service("/media", ServeDir::new("media"))
             .nest_service("/js", ServeDir::new("js"))
             .fallback_service(ServeDir::new("client-controller"));
 
+    let (adTx, adSd) = (bcTx.clone(), sdToken.clone());
     let adminApp =
         Router::new()
             .route(
@@ -97,9 +106,9 @@ async fn main() {
                 any(
                     move |wsu: WebSocketUpgrade| {
                         Networking::websocketHandler(
-                            wsu, 
-                            admTx.clone(), 
-                            adminPollRx.clone(), 
+                            wsu,
+                            adTx,
+                            adSd,
                             AdminWebsocket::handleClient
             )}))
             .nest_service("/media", ServeDir::new("media"))
@@ -127,35 +136,34 @@ async fn main() {
     let raPort = "55400";
     println!("{}", format!("Talking on {raAddr}:0"));
 
+    let (raTx, raSd) = (bcTx.clone(), sdToken.clone());
     let raControllerParser = tokio::spawn(async move {
         RetroArchHandler::handleRaDemocracy(
             UdpSocket::bind(format!("{raAddr}:0"))
                 .await
                 .expect("failed to bind UDP socket"), 
             format!("{raAddr}:{raPort}"), 
-                cliRx, 
-                pollTx
+            raTx,
+            raSd
         ).await
     });
+    let (raTx, raSd) = (bcTx.clone(), sdToken.clone());
     let adminCommandParser = tokio::spawn(async move {
         AdminWebsocket::adminMessageParser(
-            admRx,
-            shutdownTx.clone()
+            raTx,
+            raSd
         ).await
     });
 
     let clientService = 
         axum::serve(clientListener, clientApp)
             .with_graceful_shutdown(
-                shutdownSignal(
-                    shutdownRx.clone()
-        ));
+                shutdownSignal(sdToken.clone()));
+
     let adminService = 
         axum::serve(adminListener, adminApp)
             .with_graceful_shutdown(
-                shutdownSignal(
-                    shutdownRx.clone()
-        ));
+                shutdownSignal(sdToken.clone()));
 
     println!("Press Ctrl+c to exit...");
 

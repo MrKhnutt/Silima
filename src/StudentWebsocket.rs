@@ -4,14 +4,19 @@
 use axum::{
     extract::ws::{Message, WebSocket},
 };
-use tokio::{
-    sync::{mpsc, watch},
-};
+use tokio::sync::{broadcast};
 use serde_json::{Value};
 use futures_util::{SinkExt, StreamExt};
+use tokio_util::sync::CancellationToken;
 use std::sync::atomic::Ordering;
 
-use crate::{ATOMIC_ID, JsonHandlers, SILIMA_BUILD_JS_HASH};
+use crate::Input;
+use crate::{
+    ATOMIC_ID, 
+    JsonHandlers, 
+    SILIMA_BUILD_JS_HASH, 
+    SilEvent,
+};
 
 /// Creates a websocket that facilitiates connection between the provided webpage
 /// in ./admin
@@ -20,16 +25,18 @@ use crate::{ATOMIC_ID, JsonHandlers, SILIMA_BUILD_JS_HASH};
 /// handler arguement
 pub async fn handleClient(
     socket: WebSocket, 
-    tx: mpsc::Sender<String>,
-    mut rx: watch::Receiver<Option<String>>
+    token   : CancellationToken,
+    bcTx    : broadcast::Sender<SilEvent>
 ){
     let userID = ATOMIC_ID.fetch_add(1, Ordering::Relaxed);
+    let mut bcRx = bcTx.subscribe();
 
     let (
         mut wsSender, // Messages TO the student
         mut wsReceiver    // Messages FROM the student
     ) = socket.split();
 
+    // establish websocket
     loop {
         match wsSender.send(Message::Text(JsonHandlers::assignUserID(userID).into())).await {
             Ok(_) => { break; }
@@ -37,13 +44,13 @@ pub async fn handleClient(
                 // TODO, limit to x attempts before dropping connection
             }
     }};
-
     let _ = wsSender.send(Message::Text(JsonHandlers::sendVersion().into())).await;
-
     println!("Client {userID} connected");
 
+    // begin process loop
     loop{ tokio::select! {
         Some(result) = wsReceiver.next() => {
+            // decode input from websocket
             match result {
                 Ok(Message::Text(text)) => {
                     let recvJson: Value = match serde_json::from_str(&text) {
@@ -55,7 +62,6 @@ pub async fn handleClient(
                         }
                     };
                     println!("Received a {} from {}", recvJson["type"], userID);
-                    // let _ = tx.send(text.to_string()).await;  // sends to buffer
 
                     let recvHash: String = recvJson["hash"].to_string();
                     if SILIMA_BUILD_JS_HASH != recvHash {
@@ -69,13 +75,11 @@ pub async fn handleClient(
                         Some("input") => {
                             // TODO create/implement shared state architecture for channel
                             println!("sending {}", recvJson["value"].to_string());
-                            tx.send(recvJson["value"]
-                                .as_str()
-                                .unwrap()
-                                .to_string()
-                            )
-                            .await
-                            .map_err(|e| e.to_string())
+                            let _ = bcTx.send(SilEvent::Input(Input{
+                                clientId : userID,
+                                input    : recvJson["value"].to_string()
+                            }));
+                            Ok("Ok")
                         }
                         // other input goes here...
                         Some(unknown) => {
@@ -91,48 +95,48 @@ pub async fn handleClient(
                         Ok(_) => {}
                         Err(e) => {
                             println!("mpsc failed: {e}");
+                            let _ = bcTx.send(SilEvent::ClientError(userID, e));
                         }
                     }
-
                 }
 
                 Ok(Message::Close(_)) => {
-                    println!("Client disconnected");
+                    let _ = bcTx.send(SilEvent::ClientDisconnected(userID));
                     break;
                 }
 
                 // Any other result
                 Ok(_) => { 
                     println!("Unexpected message from {userID}"); 
+                    let _ = bcTx.send(SilEvent::ClientError(userID, "Unexpected message".to_string()));
+                    let _ = bcTx.send(SilEvent::ClientDisconnected(userID));
                     break;
                 }
-
                 Err(error) => {
                     println!("WebSocket error: {error} from {userID}");
+                    let _ = bcTx.send(SilEvent::ClientError(userID, error.to_string()));
+                    let _ = bcTx.send(SilEvent::ClientDisconnected(userID));
                     break;
                 }
             }
         }
-        _ = rx.changed() => {
-
-            // update to send json stats
-            let jsonStr = rx.borrow().clone();
-            match jsonStr {
-                Some(msg) => {
-                    wsSender.send(Message::Text(
-                        msg.into()
-                        ))
-                        .await
-                        .unwrap();
-                    }
-                None    => {
-                    wsSender.send(Message::Text(
-                        "Error".into()
-                        ))
-                    .await
-                    .unwrap();
-                    }
+        Ok(result) = bcRx.recv() => {
+            match result {
+                SilEvent::ClientConnected(_)            => {}
+                SilEvent::ClientDisconnected(_)         => {}
+                SilEvent::Input(_)                      => {}
+                SilEvent::PollUpdate(_)                 => {}
+                SilEvent::AdminMessage(_)               => {}
+                SilEvent::ClientError(_,_)              => {}
+                SilEvent::ShutdownSignal(_)             => {
+                    token.cancel();
+                    break;
                 }
+            }
+        }
+        // shutdown signal recieved
+        _ = token.cancelled() => {
+            break;
         }
     }}
 }
