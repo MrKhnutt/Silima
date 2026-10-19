@@ -1,4 +1,5 @@
 #![allow(non_snake_case)]
+#![allow(unused)]
 
 // dependencies
 use axum::{
@@ -39,13 +40,13 @@ struct Input {
 
 #[derive(Clone)]
 enum SilEvent {
-    ClientConnected(u16),       // u64 of the Client Connection
-    ClientDisconnected(u16),    // u64 of the Client Disconnection
+    ClientConnected(u16),       // u16 of the Client Connection
+    ClientDisconnected(u16),    // u16 of the Client Disconnection
     Input(Input),               // Controller Input
-    PollUpdate(String),       // Vector of Controller Input Counts
+    PollUpdate(String),         // JSON string of poll updates
     AdminMessage(String),       // 
-    ClientError(u16, String),   //
-    ShutdownSignal(bool),       //
+    ClientError(u16, String),   // Client transmitted error from connection
+    ShutdownSignal(bool),       // access token canceled
 }
 
 /// Transmits a signal to begin the shutdown process for all threads and websockets
@@ -56,8 +57,6 @@ async fn shutdownSignal(
             _ = tokio::signal::ctrl_c() => { sdToken.cancel(); }
             _ = sdToken.cancelled()     => { sdToken.cancel(); }
     }
-
-    println!("Shutting down Silima...");
 }
 
 #[tokio::main] // miso framework
@@ -82,7 +81,7 @@ async fn main() {
     // T is send, R is receive
 
     let (clTx, clSd) = (bcTx.clone(), sdToken.clone());
-    let clientApp =
+    let clientController =
         Router::new()
             .route(
                 "/ws", 
@@ -95,8 +94,8 @@ async fn main() {
                             StudentWebsocket::handleClient
             )}))
             .nest_service("/media", ServeDir::new("media"))
-            .nest_service("/js", ServeDir::new("js"))
-            .fallback_service(ServeDir::new("client-controller"));
+            .nest_service("/frontend", ServeDir::new("frontend"))
+            .fallback_service(ServeDir::new("static/client-controller"));
 
     let (adTx, adSd) = (bcTx.clone(), sdToken.clone());
     let adminApp =
@@ -112,8 +111,8 @@ async fn main() {
                             AdminWebsocket::handleClient
             )}))
             .nest_service("/media", ServeDir::new("media"))
-            .nest_service("/js", ServeDir::new("js"))
-            .fallback_service(ServeDir::new("admin"));
+            .nest_service("/frontend", ServeDir::new("frontend"))
+            .fallback_service(ServeDir::new("static/admin"));
 
     let clientListener = TcpListener::bind(format!("{clientAddr}:{clientPort}"))
         .await
@@ -156,7 +155,7 @@ async fn main() {
     });
 
     let clientService = 
-        axum::serve(clientListener, clientApp)
+        axum::serve(clientListener, clientController)
             .with_graceful_shutdown(
                 shutdownSignal(sdToken.clone()));
 
@@ -168,9 +167,9 @@ async fn main() {
     println!("Press Ctrl+c to exit...");
 
     let _ = tokio::join!(
-        adminService,
-        clientService,
-        raControllerParser,
-        adminCommandParser,
+        adminService,           // Admin served webpage
+        clientService,          // Client Controller
+        raControllerParser,     // Parser for Controller Echoing
+        adminCommandParser,     // Parser for Admin input? Redundant?
     );
 }

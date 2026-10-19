@@ -93,12 +93,19 @@ fn createManifest(dir: &str, config: ManifestOptions) -> Result<String, std::io:
     { hashHex = "".to_string(); }
 
     // setup system variables
-    if config.rerun
-        { println!("cargo::rerun-if-changed={dir}"); }
+    if config.rerun { 
+        println!(
+            "cargo::rerun-if-changed={}",
+            dir
+        );
+    }
+    
+    let symbol = dir.split("/").collect::<Vec<&str>>().last().unwrap().to_uppercase();
     if config.save && config.hash {
         println!(
             "cargo::rustc-env=BUILD_{}_HASH={}",
-            dir.to_uppercase(),
+            // dir.to_uppercase(),
+            symbol,
             hashHex,
         );
     }
@@ -120,8 +127,8 @@ fn createManifest(dir: &str, config: ManifestOptions) -> Result<String, std::io:
 
 fn main() {
     const SRC_DIR   : &str  = "src";
-    const CLIENT_DIR: &str  = "client-controller";
-    const ADMIN_DIR : &str  = "admin";
+    const CLIENT_DIR: &str  = "static/client-controller";
+    const ADMIN_DIR : &str  = "static/admin";
     const BG_DIR    : &str  = "media/background";
 
     match createManifest(SRC_DIR, ManifestOptions { 
