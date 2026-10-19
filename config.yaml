@@ -1,0 +1,19 @@
+# config.yaml
+
+svg:
+  elements:
+    size: "256"
+    precision: 4
+    color: "#000000"
+    opacity: "1.0"
+
+  optimization:
+    remove_metadata: true
+    strip_comments: true
+
+paths:
+  icons: "media/background/"
+  pyLibs: "libs"
+
+fileNames:
+  manifest: "manifest.json"
