@@ -4,7 +4,7 @@
 
 ### Server Side
 
-- ⬜ Atomic Client Identity
+- 🔨 Atomic Client Identity
 - ⬜ Per User Voting
 - ✅ Shared State Architecture
 - ⏸️ Vote Resolution
@@ -18,9 +18,9 @@
 - ⬜ Anonymous IP Binding
 - 🔨 Vote Resolution
 - ⬜ Networking Controller Binding
-- 🔨 Build Hashing and directory manifest
+- ✅ Build Hashing and directory manifest
 - 🔨 Build Sync
-- ⬜ JS Hash Query Strings for Cache Updates
+- 🔨 JS Hash Query Strings for Cache Updates
 - 🔨 Build.rs hash comparison for for manifest updates
 
 ### Client UI
