@@ -104,10 +104,10 @@ function initialColor(target) {
 initialColor(
     document.querySelector(".animated-background"),
 );
-// complementaryColor(
-//     document.querySelector(".animated-background"),
-//     document.querySelector(".menubar")
-// );
+complementaryColor(
+    document.querySelector(".animated-background"),
+    document.querySelector(".menubar")
+);
 
 buildGrid();
 window.addEventListener("resize", buildGrid);
