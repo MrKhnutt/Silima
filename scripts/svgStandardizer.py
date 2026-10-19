@@ -7,8 +7,11 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parent / config["paths"]["pyLibs"]))
 
 import lxml.etree as ET
-from libs.svgpathtools import svg2paths
+from libs.svgpathtools import svg2paths2
 from libs.scour import scour
+import libs.cairosvg
+from PIL import Image
+from io import BytesIO
 
 import json
 
@@ -21,7 +24,6 @@ with open(ICONS_DIR + MANIFEST) as file:
 
 for svg in jsonData["files"]:
     svg = ICONS_DIR + svg
-    print(svg)
 
     tree = ET.parse(svg)
     root = tree.getroot()
@@ -75,7 +77,9 @@ for svg in jsonData["files"]:
     )
 
     # set viewport
-    paths, attributes = svg2paths(svg)
+    paths, _, _ = svg2paths2(
+        svg,
+    )
 
     bounds = [path.bbox() for path in paths if len(path) > 0]
 
@@ -85,6 +89,15 @@ for svg in jsonData["files"]:
     ymax = max(b[3] for b in bounds)
 
     root.set("viewBox", f"{xmin} {ymin} {xmax - xmin} {ymax - ymin}")
+
+    # check if file is gone
+    png = libs.cairosvg.svg2png(
+        ET.tostring(root, encoding="utf-8")
+    )
+    image = Image.open(BytesIO(png)).convert("RGBA")
+    if image.getchannel("A").getbbox() is None:
+        print(f"WARNING: {svg} renders completely transparent!")
+        continue # cancel conversion
 
     # write to file
     tree.write(svg, encoding="utf-8")
@@ -108,8 +121,20 @@ for svg in jsonData["files"]:
 
     with open(svg, "r", encoding="utf-8") as f:
         file = f.read()
+        scouredsvg = scour.scourString(file, options)
+
+        # check if file is gone
+        png = libs.cairosvg.svg2png(
+            bytestring=scouredsvg.encode("utf-8")
+        )
+        image = Image.open(BytesIO(png)).convert("RGBA")
+        if image.getchannel("A").getbbox() is None:
+            print(f"WARNING: {svg} renders completely transparent!")
+            continue # cancel conversion
+
+        # save
         with open(svg, "w", encoding="utf-8") as f:
-            f.write(scour.scourString(file, options))
+            f.write(scouredsvg)
 
 # end program, log
 print("complete")
