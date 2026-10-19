@@ -2,4 +2,5 @@
 /.vscode
 **/*/directory.dat
 **/*/manifest.json
+/scripts/libs/*
 /sandbox
