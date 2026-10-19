@@ -62,7 +62,9 @@
 
 ### Misc
 
-- ⬜ Script to Normalize SVGs (Python?)
+- ✅ Script to Normalize SVGs
+- ⬜ Run script if icons have changed
+- ⬜ Manually invoke script from build command/admin menu
 
 ## Technologies Used
 
