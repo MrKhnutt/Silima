@@ -90,9 +90,7 @@ function complementaryColor(source, target = source) {
     const color = getComputedStyle(source).backgroundColor;
 
     target.style.backgroundColor = `hsl(from ${color} calc(h + 180) s l / alpha)`;
-
-    console.log(target.style.backgroundColor)
-    
+    // console.log(target.style.backgroundColor)
 }
 
 function initialColor(target) {

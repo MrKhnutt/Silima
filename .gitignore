@@ -1,5 +1,5 @@
 /target
 /.vscode
-*/directory.dat
+**/*/directory.dat
 **/*/manifest.json
 /sandbox
