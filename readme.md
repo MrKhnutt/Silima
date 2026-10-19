@@ -62,7 +62,7 @@
 
 ### Misc
 
-- ⬜ Script to Normalize SVGs (Python?)
+- ✅ Script to Normalize SVGs
 
 ## Technologies Used
 
