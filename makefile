@@ -6,3 +6,7 @@ check :
 prune:
 	cargo shear --fix
 	cargo check --all-targets
+
+# Install python dependencies
+python-setup:
+	python3 -m pip install --target ./scripts/libs/ lxml svgpathtools scour pyyaml
