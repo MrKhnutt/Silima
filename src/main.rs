@@ -1,4 +1,5 @@
 #![allow(non_snake_case)]
+#![allow(unused)]
 
 // dependencies
 use axum::{
@@ -39,13 +40,13 @@ struct Input {
 
 #[derive(Clone)]
 enum SilEvent {
-    ClientConnected(u16),       // u64 of the Client Connection
-    ClientDisconnected(u16),    // u64 of the Client Disconnection
+    ClientConnected(u16),       // u16 of the Client Connection
+    ClientDisconnected(u16),    // u16 of the Client Disconnection
     Input(Input),               // Controller Input
-    PollUpdate(String),       // Vector of Controller Input Counts
+    PollUpdate(String),         // JSON string of poll updates
     AdminMessage(String),       // 
-    ClientError(u16, String),   //
-    ShutdownSignal(bool),       //
+    ClientError(u16, String),   // Client transmitted error from connection
+    ShutdownSignal(bool),       // access token canceled
 }
 
 /// Transmits a signal to begin the shutdown process for all threads and websockets
@@ -56,8 +57,6 @@ async fn shutdownSignal(
             _ = tokio::signal::ctrl_c() => { sdToken.cancel(); }
             _ = sdToken.cancelled()     => { sdToken.cancel(); }
     }
-
-    println!("Shutting down Silima...");
 }
 
 #[tokio::main] // miso framework
