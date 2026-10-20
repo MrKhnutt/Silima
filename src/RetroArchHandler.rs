@@ -12,18 +12,11 @@ use rand::{
         seq::SliceRandom,
         // thread_rng,
 };
-use crate::{JsonHandlers, SilEvent};
+use crate::{JsonHandlers, SilEvent, Events::Gamemode};
 
 const MS_PER_FRAME      : u64 = 17;
 const VOTING_PERIOD     : u64 = 2000;
 const POLL_ACTIONS_SENT : usize = 4;
-
-#[derive(PartialEq, Clone, Copy)]
-enum Gamemode {
-    Anarchy,
-    Democracy,
-    Paused,
-}
 
 /// Takes in an id of the button being pressed, and the state of that
 /// button in the fuction of state. For current purposes, ```state```

@@ -14,3 +14,16 @@ pub enum SilEvent {
     ClientError(u16, String),   // Client transmitted error from connection
     ShutdownSignal(bool),       // access token canceled
 }
+
+#[derive(PartialEq, Clone, Copy)]
+pub enum Gamemode {
+    Anarchy,
+    Democracy,
+    Paused,
+}
+#[derive(Clone)]
+pub enum AdminAction {
+    GamemodeChange(Gamemode),
+    Trivia(u16, usize),
+    DemocracyVotingPeriod(usize),
+}
