@@ -52,7 +52,33 @@ async fn gamemodeParser(
     waTx        : watch::Sender<GameMode>,
     token       : CancellationToken
 ){
+    let mut bcRx = bcTx.subscribe();
 
+    loop { tokio::select! {
+        // message recieved received
+        Ok(result) = bcRx.recv() => {
+            match result {
+                SilEvent::AdminMessage(_msg)       => {
+                    match "democracy" {
+                        "democracy" => {
+                            waTx.send(GameMode::Democracy);
+                        }
+                        "anarcy" => {
+                            waTx.send(GameMode::Anarchy);
+                        }
+                        "pause" => {
+                            waTx.send(GameMode::Paused);
+                        }
+                        &_ => {}
+                    }
+                }
+                _ => {} // we don't care
+            }
+        }
+        _ = token.cancelled() => {
+            break;
+        }
+    }}
 }
 /// 
 /// 
