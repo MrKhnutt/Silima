@@ -6,7 +6,7 @@ use tokio::{
 };
 use tokio_util::sync::CancellationToken;
 use std::{
-    collections::HashMap, ops::Add, time::Duration,
+    clone, collections::HashMap, ops::Add, time::Duration,
 };
 use rand::{
         seq::SliceRandom,
@@ -18,7 +18,8 @@ const MS_PER_FRAME      : u64 = 17;
 const VOTING_PERIOD     : u64 = 2000;
 const POLL_ACTIONS_SENT : usize = 4;
 
-enum GameMode {
+#[derive(PartialEq, Clone, Copy)]
+enum Gamemode {
     Anarchy,
     Democracy,
     Paused,
@@ -47,9 +48,10 @@ fn ra_packet(id: i32, state: u16) -> [u8; 20] {
     packet
 }
 
-async fn gamemodeParser(
+/// parser for gamemode commands from broadcast
+async fn GamemodeParser(
     bcTx        : broadcast::Sender<SilEvent>,
-    waTx        : watch::Sender<GameMode>,
+    waTx        : watch::Sender<Gamemode>,
     token       : CancellationToken
 ){
     let mut bcRx = bcTx.subscribe();
@@ -61,13 +63,13 @@ async fn gamemodeParser(
                 SilEvent::AdminMessage(_msg)       => {
                     match "democracy" {
                         "democracy" => {
-                            waTx.send(GameMode::Democracy);
+                            waTx.send(Gamemode::Democracy);
                         }
                         "anarcy" => {
-                            waTx.send(GameMode::Anarchy);
+                            waTx.send(Gamemode::Anarchy);
                         }
                         "pause" => {
-                            waTx.send(GameMode::Paused);
+                            waTx.send(Gamemode::Paused);
                         }
                         &_ => {}
                     }
@@ -80,198 +82,211 @@ async fn gamemodeParser(
         }
     }}
 }
+/// central gamemode function
 /// 
-/// 
-async fn democracy(
+async fn gamemode(
     udp         : UdpSocket,
     udpAddress  : String,
     bcTx        : broadcast::Sender<SilEvent>,
-    waRx        : watch::Receiver<GameMode>,
+    mut waRx    : watch::Receiver<Gamemode>,
     token       : CancellationToken
 ){
     let mut clientVote = HashMap::new();
-    let mut interval = time::interval(Duration::from_millis(VOTING_PERIOD));
-    let mut bcRx = bcTx.subscribe();
-
-    loop {
-        tokio::select! {
-            // input received
-            Ok(result) = bcRx.recv() => {
-            match result {
-                SilEvent::ClientConnected(uid)          => {
-                    clientVote.insert(uid, -1);
-                }
-                SilEvent::ClientDisconnected(uid)       => {
-                    clientVote.remove(&uid);
-                }
-                SilEvent::Input(input)                  => {
-                    // parse the input and add it to the map
-                    let id: i32 = match input.input.replace("\"", "").as_str() {
-                        "A" => 8,
-                        "B" => 0,
-                        "X" => 9,
-                        "Y" => 1,
-
-                        "START" => 3,
-                        "SELECT" => 2,
-
-                        "UP" => 4,
-                        "DOWN" => 5,
-                        "LEFT" => 6,
-                        "RIGHT" => 7,
-
-                        "L" => 10,
-                        "R" => 11,
-
-                        _ => -1,
-                    };
-                    // TODO: check if user is in scope, if not disconnect
-                    clientVote.insert(input.clientId, id);
-
-                }
-                SilEvent::PollUpdate(_)                 => {}
-                SilEvent::AdminMessage(_)               => {}
-                SilEvent::ClientError(_,_)              => {}
-                SilEvent::ShutdownSignal(_)             => {}
-            }
-        }
-            // voting period comes due
-        _ = interval.tick() => {
-            // no users connected
-            if clientVote.is_empty() {
-                println!("no users");
-                continue;
-            }
-            // collect most voted
-            let mut voteCount = HashMap::new();
-            let mut v = clientVote
-                .values()
-                .copied()
-                // we now have a collection of inputs from all users
-                .collect::<Vec<i32>>()
-                .iter()
-                .map(|id| (
-                    *id, voteCount.entry(id)
-                    .or_insert(0)
-                    .add(1)
-                )).collect::<Vec<(i32,i32)>>();
-                // we have an array where we have (input, count) in v
-            // client vote can be reset
-            for value in clientVote.values_mut() {
-                *value = -1
-            }
-            // randomize then sort to tie break
-            v.shuffle(&mut rand::rng());
-            v.sort_by_key(|(_,count)| *count * -1);
-            
-            // check for valid inputs
-            if v[0].0 == -1 {
-                // nothing collected at index 0
-                v.remove(0);
-            }
-            if v.is_empty() {
-                println!("No action selected, idling");
-                continue;
-            }
-            // serialize to proper length
-            v = v[0..POLL_ACTIONS_SENT.min(v.len())].to_vec();
-            let (id, count) = v[0];
-            println!("Voted {} at {} times", id, count);
-            // send out poll stats
-            match JsonHandlers::createPollingJson(v.clone()) {
-                Ok(json)    => {
-                    let _ = bcTx.send(
-                        SilEvent::PollUpdate(
-                            json.to_string()
-                    )); 
-                },
-                Err(e)      => { println!("{e}"); },
-            }
-            // ra_packet builds the byte collection through shifting to send via UDP
-            let _ = udp.send_to(&ra_packet(id, 1), &udpAddress).await;  // press
-            time::sleep(Duration::from_millis(MS_PER_FRAME)).await;
-            let _ = udp.send_to(&ra_packet(id, 0), &udpAddress).await;  // unpress
-        }
-        _ = token.cancelled() => {
-            break;
-        }
-    }}
-}
-///
-/// 
-async fn anarchy(
-    udp         : UdpSocket,
-    udpAddress  : String,
-    bcTx        : broadcast::Sender<SilEvent>,
-    waRx        : watch::Receiver<GameMode>,
-    token       : CancellationToken
-){
+    let mut deInterval = time::interval(Duration::from_millis(VOTING_PERIOD));
+    let mut anInterval = time::interval(Duration::from_millis(MS_PER_FRAME));
     let mut bcRx = bcTx.subscribe();
     let mut vote = -1;
-    let mut interval = time::interval(Duration::from_millis(VOTING_PERIOD));
+
+    let mut state = Gamemode::Democracy;
 
     loop {
-        tokio::select! {
-            // input received
-            Ok(result) = bcRx.recv() => {
-            match result {
-                SilEvent::ClientConnected(uid)          => {
-                    // clientVote.insert(uid, -1);
+    // pause state awaiting gamemode set
+        while state == Gamemode::Paused { tokio::select! {
+            Ok(result) = bcRx.recv() => { match result {
+                SilEvent::ClientConnected(uid)      => {
+                    clientVote.insert(uid, -1);
                 }
-                SilEvent::ClientDisconnected(uid)       => {
-                    // clientVote.remove(&uid);
+                SilEvent::ClientDisconnected(uid)   => {
+                    clientVote.remove(&uid);
                 }
-                SilEvent::Input(input)                  => {
-                    // parse the input and add it to the map
-                    let id: i32 = match input.input.replace("\"", "").as_str() {
-                        "A" => 8,
-                        "B" => 0,
-                        "X" => 9,
-                        "Y" => 1,
-
-                        "START" => 3,
-                        "SELECT" => 2,
-
-                        "UP" => 4,
-                        "DOWN" => 5,
-                        "LEFT" => 6,
-                        "RIGHT" => 7,
-
-                        "L" => 10,
-                        "R" => 11,
-
-                        _ => -1,
-                    };
-                    if id != -1 {
-                        vote = id;
-                }}
-                SilEvent::PollUpdate(_)                 => {}
-                SilEvent::AdminMessage(_)               => {}
-                SilEvent::ClientError(_,_)              => {}
-                SilEvent::ShutdownSignal(_)             => {}
+                _ => {}
+            }}
+            _ = waRx.changed() => {
+                state = *waRx.borrow();
             }
-        }
-            // voting period comes due
-        _ = interval.tick() => {
-            // no users submitted an input for this frame
-            let selectedVote = vote.clone();
-            vote = -1;
-
-            if selectedVote == -1 {
-                continue;
+            _ = token.cancelled()        => {
+                break;
             }
-            
-            // ra_packet builds the byte collection through shifting to send via UDP
-            let _ = udp.send_to(&ra_packet(selectedVote, 1), &udpAddress).await;  // press
-            time::sleep(Duration::from_millis(MS_PER_FRAME / 2)).await;
-            let _ = udp.send_to(&ra_packet(selectedVote, 0), &udpAddress).await;  // unpress
-        }
-        _ = token.cancelled() => {
-            break;
-        }
-    }}
+        }}
+        // democracy gamemode
+        while state == Gamemode::Democracy  { tokio::select! {
+                // input received
+                Ok(result) = bcRx.recv() => {
+                match result {
+                    SilEvent::ClientConnected(uid)          => {
+                        clientVote.insert(uid, -1);
+                    }
+                    SilEvent::ClientDisconnected(uid)       => {
+                        clientVote.remove(&uid);
+                    }
+                    SilEvent::Input(input)                  => {
+                        // parse the input and add it to the map
+                        let id: i32 = match input.input.replace("\"", "").as_str() {
+                            "A" => 8,
+                            "B" => 0,
+                            "X" => 9,
+                            "Y" => 1,
+
+                            "START" => 3,
+                            "SELECT" => 2,
+
+                            "UP" => 4,
+                            "DOWN" => 5,
+                            "LEFT" => 6,
+                            "RIGHT" => 7,
+
+                            "L" => 10,
+                            "R" => 11,
+
+                            _ => -1,
+                        };
+                        // TODO: check if user is in scope, if not disconnect
+                        clientVote.insert(input.clientId, id);
+                    }
+                    _ =>{}
+                }
+            }
+                // voting period comes due
+            _ = deInterval.tick() => {
+                // no users connected
+                if clientVote.is_empty() {
+                    println!("no users");
+                    continue;
+                }
+                // collect most voted
+                let mut voteCount = HashMap::new();
+                let mut v = clientVote
+                    .values()
+                    .copied()
+                    // we now have a collection of inputs from all users
+                    .collect::<Vec<i32>>()
+                    .iter()
+                    .map(|id| (
+                        *id, voteCount.entry(id)
+                        .or_insert(0)
+                        .add(1)
+                    )).collect::<Vec<(i32,i32)>>();
+                    // we have an array where we have (input, count) in v
+                // client vote can be reset
+                for value in clientVote.values_mut() {
+                    *value = -1
+                }
+                // randomize then sort to tie break
+                v.shuffle(&mut rand::rng());
+                v.sort_by_key(|(_,count)| *count * -1);
+                
+                // check for valid inputs
+                if v[0].0 == -1 {
+                    // nothing collected at index 0
+                    v.remove(0);
+                }
+                if v.is_empty() {
+                    println!("No action selected, idling");
+                    continue;
+                }
+                // serialize to proper length
+                v = v[0..POLL_ACTIONS_SENT.min(v.len())].to_vec();
+                let (id, count) = v[0];
+                println!("Voted {} at {} times", id, count);
+                // send out poll stats
+                match JsonHandlers::createPollingJson(v.clone()) {
+                    Ok(json)    => {
+                        let _ = bcTx.send(
+                            SilEvent::PollUpdate(
+                                json.to_string()
+                        )); 
+                    },
+                    Err(e)      => { println!("{e}"); },
+                }
+                // ra_packet builds the byte collection through shifting to send via UDP
+                let _ = udp.send_to(&ra_packet(id, 1), &udpAddress).await;  // press
+                time::sleep(Duration::from_millis(MS_PER_FRAME)).await;
+                let _ = udp.send_to(&ra_packet(id, 0), &udpAddress).await;  // unpress
+            }
+            _ = waRx.changed() => {
+                state = *waRx.borrow();
+            }
+            _ = token.cancelled() => {
+                break;
+            }
+        }}
+        // anarchy gamemode
+        while state == Gamemode::Anarchy    { tokio::select! {
+                // input received
+                Ok(result) = bcRx.recv() => {
+                match result {
+                    SilEvent::ClientConnected(uid)          => {
+                        clientVote.insert(uid, -1);
+                    }
+                    SilEvent::ClientDisconnected(uid)       => {
+                        clientVote.remove(&uid);
+                    }
+                    SilEvent::Input(input)                  => {
+                        // parse the input and add it to the map
+                        let id: i32 = match input.input.replace("\"", "").as_str() {
+                            "A" => 8,
+                            "B" => 0,
+                            "X" => 9,
+                            "Y" => 1,
+
+                            "START" => 3,
+                            "SELECT" => 2,
+
+                            "UP" => 4,
+                            "DOWN" => 5,
+                            "LEFT" => 6,
+                            "RIGHT" => 7,
+
+                            "L" => 10,
+                            "R" => 11,
+
+                            _ => -1,
+                        };
+                        if id != -1 {
+                            vote = id;
+                    }}
+                    _ =>{}
+
+                }
+            }
+                // voting period comes due
+            _ = anInterval.tick() => {
+                // no users submitted an input for this frame
+                let selectedVote = vote.clone();
+                vote = -1;
+
+                if selectedVote == -1 {
+                    continue;
+                }
+                
+                // ra_packet builds the byte collection through shifting to send via UDP
+                let _ = udp.send_to(&ra_packet(selectedVote, 1), &udpAddress).await;  // press
+                time::sleep(Duration::from_millis(MS_PER_FRAME / 2)).await;
+                let _ = udp.send_to(&ra_packet(selectedVote, 0), &udpAddress).await;  // unpress
+            }
+            _ = waRx.changed() => {
+                state = *waRx.borrow();
+            }
+            _ = token.cancelled() => {
+                break;
+            }
+        }}
+    if token.is_cancelled() 
+        { break; }
+    }
 }
 
+/// setup for gamemode and for the parser, joining the threads
 pub async fn handleRa (
     udpIP       : String,
     udpAddress  : String,
@@ -279,13 +294,13 @@ pub async fn handleRa (
     token       : CancellationToken
 ){
     let mut bcRx = bcTx.subscribe();
-    let (mut modeTx, mut modeRx) = watch::channel(GameMode::Paused);
+    let (mut modeTx, mut modeRx) = watch::channel(Gamemode::Paused);
 
     let (deTx, deSd) = (bcTx.clone(), token.clone());
     let (deUdpAdd, deIP) = (udpAddress.clone(), udpIP.clone());
     let deWa = modeRx.clone();
-    let democracyGamemode = tokio::spawn(async move {
-        democracy(
+    let gamemode = tokio::spawn(async move {
+        gamemode(
             UdpSocket::bind(format!("{deIP}:0"))
                 .await
                 .expect("failed to bind UDP socket"), 
@@ -296,24 +311,24 @@ pub async fn handleRa (
         ).await
     });
 
-    let (anTx, anSd) = (bcTx.clone(), token.clone());
-    let (anUdpAdd, anIP) = (udpAddress.clone(), udpIP.clone());
-    let anWa = modeRx.clone();
-    let anarchyGamemode = tokio::spawn(async move {
-        anarchy(
-            UdpSocket::bind(format!("{anIP}:0"))
-                .await
-                .expect("failed to bind UDP socket"), 
-            anUdpAdd, 
-            anTx,
-            anWa,
-            anSd
-        ).await
-    });
+    // let (anTx, anSd) = (bcTx.clone(), token.clone());
+    // let (anUdpAdd, anIP) = (udpAddress.clone(), udpIP.clone());
+    // let anWa = modeRx.clone();
+    // let anarchyGamemode = tokio::spawn(async move {
+    //     anarchy(
+    //         UdpSocket::bind(format!("{anIP}:0"))
+    //             .await
+    //             .expect("failed to bind UDP socket"), 
+    //         anUdpAdd, 
+    //         anTx,
+    //         anWa,
+    //         anSd
+    //     ).await
+    // });
 
     let gmTx = bcTx.clone();
-    let gamemodeHandler = tokio::spawn(async move {
-        gamemodeParser(
+    let GamemodeHandler = tokio::spawn(async move {
+        GamemodeParser(
             bcTx,
             modeTx,
             token
@@ -321,9 +336,10 @@ pub async fn handleRa (
     });
 
     let _ = tokio::join!(
-        democracyGamemode,
-        anarchyGamemode,
-        gamemodeHandler,
+        gamemode,
+        // democracyGamemode,
+        // anarchyGamemode,
+        GamemodeHandler,
     );
 }
 /// This function currently infinently loops to create the mass polling
@@ -442,3 +458,76 @@ pub async fn handleRaDemocracy(
         }
     }}
 }
+
+// async fn anarchy(
+//     udp         : UdpSocket,
+//     udpAddress  : String,
+//     bcTx        : broadcast::Sender<SilEvent>,
+//     waRx        : watch::Receiver<Gamemode>,
+//     token       : CancellationToken
+// ){
+//     let mut bcRx = bcTx.subscribe();
+//     let mut vote = -1;
+//     let mut interval = time::interval(Duration::from_millis(VOTING_PERIOD));
+
+//     loop {
+//         tokio::select! {
+//             // input received
+//             Ok(result) = bcRx.recv() => {
+//             match result {
+//                 SilEvent::ClientConnected(uid)          => {
+//                     // clientVote.insert(uid, -1);
+//                 }
+//                 SilEvent::ClientDisconnected(uid)       => {
+//                     // clientVote.remove(&uid);
+//                 }
+//                 SilEvent::Input(input)                  => {
+//                     // parse the input and add it to the map
+//                     let id: i32 = match input.input.replace("\"", "").as_str() {
+//                         "A" => 8,
+//                         "B" => 0,
+//                         "X" => 9,
+//                         "Y" => 1,
+
+//                         "START" => 3,
+//                         "SELECT" => 2,
+
+//                         "UP" => 4,
+//                         "DOWN" => 5,
+//                         "LEFT" => 6,
+//                         "RIGHT" => 7,
+
+//                         "L" => 10,
+//                         "R" => 11,
+
+//                         _ => -1,
+//                     };
+//                     if id != -1 {
+//                         vote = id;
+//                 }}
+//                 SilEvent::PollUpdate(_)                 => {}
+//                 SilEvent::AdminMessage(_)               => {}
+//                 SilEvent::ClientError(_,_)              => {}
+//                 SilEvent::ShutdownSignal(_)             => {}
+//             }
+//         }
+//             // voting period comes due
+//         _ = interval.tick() => {
+//             // no users submitted an input for this frame
+//             let selectedVote = vote.clone();
+//             vote = -1;
+
+//             if selectedVote == -1 {
+//                 continue;
+//             }
+            
+//             // ra_packet builds the byte collection through shifting to send via UDP
+//             let _ = udp.send_to(&ra_packet(selectedVote, 1), &udpAddress).await;  // press
+//             time::sleep(Duration::from_millis(MS_PER_FRAME / 2)).await;
+//             let _ = udp.send_to(&ra_packet(selectedVote, 0), &udpAddress).await;  // unpress
+//         }
+//         _ = token.cancelled() => {
+//             break;
+//         }
+//     }}
+// }
