@@ -23,6 +23,9 @@ mod RetroArchHandler;
 mod JsonHandlers;
 mod Networking;
 mod AdminWebsocket;
+mod Events;
+
+use crate::Events::{SilEvent, Input};
 
 pub const SILIMA_BUILD_RS_HASH: &str = env!("BUILD_SRC_HASH");
 pub const SILIMA_BUILD_JS_HASH: &str = env!("BUILD_CLIENT-CONTROLLER_HASH");
@@ -31,23 +34,6 @@ pub const SILIMA_BUILD_VER: &str = env!("CARGO_PKG_VERSION");
 const CAPACITY      : usize     = 32;
 
 pub static ATOMIC_ID: AtomicU16 = AtomicU16::new(1);
-
-#[derive(Clone)]
-struct Input {
-    clientId    : u16,      ////// Atomic Client Id
-    input       : String    ////// The Input
-}
-
-#[derive(Clone)]
-enum SilEvent {
-    ClientConnected(u16),       // u16 of the Client Connection
-    ClientDisconnected(u16),    // u16 of the Client Disconnection
-    Input(Input),               // Controller Input
-    PollUpdate(String),         // JSON string of poll updates
-    AdminMessage(String),       // 
-    ClientError(u16, String),   // Client transmitted error from connection
-    ShutdownSignal(bool),       // access token canceled
-}
 
 /// Transmits a signal to begin the shutdown process for all threads and websockets
 async fn shutdownSignal(
