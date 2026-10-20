@@ -2,7 +2,7 @@
 
 // dependencies
 use tokio::{
-    net::UdpSocket, sync::{broadcast}, time,
+    net::UdpSocket, sync::{broadcast, watch}, time,
 };
 use tokio_util::sync::CancellationToken;
 use std::{
@@ -17,6 +17,12 @@ use crate::{JsonHandlers, SilEvent};
 const MS_PER_FRAME      : u64 = 17;
 const VOTING_PERIOD     : u64 = 2000;
 const POLL_ACTIONS_SENT : usize = 4;
+
+enum GameMode {
+    Anarchy,
+    Democracy,
+    Paused,
+}
 
 /// Takes in an id of the button being pressed, and the state of that
 /// button in the fuction of state. For current purposes, ```state```
@@ -41,10 +47,20 @@ fn ra_packet(id: i32, state: u16) -> [u8; 20] {
     packet
 }
 
+async fn gamemodeParser(
+    bcTx        : broadcast::Sender<SilEvent>,
+    waTx        : watch::Sender<GameMode>,
+    token       : CancellationToken
+){
+
+}
+/// 
+/// 
 async fn democracy(
     udp         : UdpSocket,
     udpAddress  : String,
     bcTx        : broadcast::Sender<SilEvent>,
+    waRx        : watch::Receiver<GameMode>,
     token       : CancellationToken
 ){
     let mut clientVote = HashMap::new();
@@ -161,6 +177,7 @@ async fn anarchy(
     udp         : UdpSocket,
     udpAddress  : String,
     bcTx        : broadcast::Sender<SilEvent>,
+    waRx        : watch::Receiver<GameMode>,
     token       : CancellationToken
 ){
     let mut bcRx = bcTx.subscribe();
@@ -229,6 +246,60 @@ async fn anarchy(
     }}
 }
 
+pub async fn handleRa (
+    udpIP       : String,
+    udpAddress  : String,
+    bcTx        : broadcast::Sender<SilEvent>,
+    token       : CancellationToken
+){
+    let mut bcRx = bcTx.subscribe();
+    let (mut modeTx, mut modeRx) = watch::channel(GameMode::Paused);
+
+    let (deTx, deSd) = (bcTx.clone(), token.clone());
+    let (deUdpAdd, deIP) = (udpAddress.clone(), udpIP.clone());
+    let deWa = modeRx.clone();
+    let democracyGamemode = tokio::spawn(async move {
+        democracy(
+            UdpSocket::bind(format!("{deIP}:0"))
+                .await
+                .expect("failed to bind UDP socket"), 
+            deUdpAdd, 
+            deTx,
+            deWa,
+            deSd
+        ).await
+    });
+
+    let (anTx, anSd) = (bcTx.clone(), token.clone());
+    let (anUdpAdd, anIP) = (udpAddress.clone(), udpIP.clone());
+    let anWa = modeRx.clone();
+    let anarchyGamemode = tokio::spawn(async move {
+        anarchy(
+            UdpSocket::bind(format!("{anIP}:0"))
+                .await
+                .expect("failed to bind UDP socket"), 
+            anUdpAdd, 
+            anTx,
+            anWa,
+            anSd
+        ).await
+    });
+
+    let gmTx = bcTx.clone();
+    let gamemodeHandler = tokio::spawn(async move {
+        gamemodeParser(
+            bcTx,
+            modeTx,
+            token
+        ).await
+    });
+
+    let _ = tokio::join!(
+        democracyGamemode,
+        anarchyGamemode,
+        gamemodeHandler,
+    );
+}
 /// This function currently infinently loops to create the mass polling
 /// bheavior of this function
 pub async fn handleRaDemocracy(
