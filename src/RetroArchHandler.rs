@@ -6,8 +6,7 @@ use tokio::{
 };
 use tokio_util::sync::CancellationToken;
 use std::{
-    collections::HashMap,
-    time::Duration,
+    collections::HashMap, ops::Add, time::Duration,
 };
 use rand::{
         seq::SliceRandom,
@@ -42,6 +41,19 @@ fn ra_packet(id: i32, state: u16) -> [u8; 20] {
     packet
 }
 
+async fn democracy(
+
+){
+
+}
+///
+/// 
+async fn anarchy(
+
+){
+    
+}
+
 /// This function currently infinently loops to create the mass polling
 /// bheavior of this function
 pub async fn handleRaDemocracy(
@@ -50,8 +62,7 @@ pub async fn handleRaDemocracy(
     bcTx        : broadcast::Sender<SilEvent>,
     token       : CancellationToken
 ){
-
-    let mut inputVote = HashMap::new();
+    let mut clientVote = HashMap::new();
     let mut interval = time::interval(Duration::from_millis(VOTING_PERIOD));
     let mut bcRx = bcTx.subscribe();
 
@@ -60,10 +71,13 @@ pub async fn handleRaDemocracy(
             // input received
             Ok(result) = bcRx.recv() => {
             match result {
-                SilEvent::ClientConnected(_)            => {}
-                SilEvent::ClientDisconnected(_)         => {}
+                SilEvent::ClientConnected(uid)          => {
+                    clientVote.insert(uid, -1);
+                }
+                SilEvent::ClientDisconnected(uid)       => {
+                    clientVote.remove(&uid);
+                }
                 SilEvent::Input(input)                  => {
-                    println!("{}:{}", input.input.as_str(), input.input.as_str() == "B");
                     // parse the input and add it to the map
                     let id: i32 = match input.input.replace("\"", "").as_str() {
                         "A" => 8,
@@ -84,64 +98,72 @@ pub async fn handleRaDemocracy(
 
                         _ => -1,
                     };
-                    *inputVote.entry(id).or_insert(0) += 1;
+                    // TODO: check if user is in scope, if not disconnect
+                    clientVote.insert(input.clientId, id);
+
                 }
                 SilEvent::PollUpdate(_)                 => {}
                 SilEvent::AdminMessage(_)               => {}
                 SilEvent::ClientError(_,_)              => {}
-                SilEvent::ShutdownSignal(_)             => {
-                    token.cancel();
-                    break;
-                }
+                SilEvent::ShutdownSignal(_)             => {}
             }
         }
             // voting period comes due
         _ = interval.tick() => {
-            //optimize this TODO
-            match inputVote.iter().max_by_key(|&n| n) {
-                // return is valid
-                Some((_,_)) => {
-                    // clone to preserve future
-                    let winnerVec: Option<Vec<(i32, i32)>> = {
-                        // sort the database to allow for winner to be chosen
-                        let mut v = inputVote.iter()
-                            .map(|(id, count)| (*id, *count))
-                            .collect::<Vec<(i32,i32)>>();
-                        // sort values, winner in pos 0
-                        v.shuffle(&mut rand::rng());
-                        v.sort_by_key(|(_,count)| *count * -1);
-                        if v.is_empty() { None } else { Some(v[0..POLL_ACTIONS_SENT.min(v.len())].to_vec()) }
-                    };
-                    // clear history here to preserve future
-                    inputVote.clear();
-                    // future in peril due to await
-                    match winnerVec {
-                        // input received, send out results
-                        Some(votes) => {
-                            let (id, count) = votes[0];
-                            println!("Voted {} at {} times", id, count);
-                            match JsonHandlers::createPollingJson(votes.clone()) {
-                                Ok(json)    => {
-                                    let _ = bcTx.send(
-                                        SilEvent::PollUpdate(
-                                            json.to_string()
-                                        )
-                                    ); 
-                                },
-                                Err(e)      => { println!("{e}"); },
-                            }
-                            // ra_packet builds the byte collection through shifting to send via UDP
-                            let _ = udp.send_to(&ra_packet(id, 1), &udpAddress).await;  // press
-                            time::sleep(Duration::from_millis(MS_PER_FRAME)).await;
-                            let _ = udp.send_to(&ra_packet(id, 0), &udpAddress).await;  // unpress
-                        }
-                        // no button press
-                        None => {
-                            println!("No action selected, idling");
-                        }
-                    };
-                } None => {}
+            // no users connected
+            if clientVote.is_empty() {
+                println!("no users");
+                continue;
             }
+            // collect most voted
+            let mut voteCount = HashMap::new();
+            let mut v = clientVote
+                .values()
+                .copied()
+                // we now have a collection of inputs from all users
+                .collect::<Vec<i32>>()
+                .iter()
+                .map(|id| (
+                    *id, voteCount.entry(id)
+                    .or_insert(0)
+                    .add(1)
+                )).collect::<Vec<(i32,i32)>>();
+                // we have an array where we have (input, count) in v
+            // client vote can be reset
+            for value in clientVote.values_mut() {
+                *value = -1
+            }
+            // randomize then sort to tie break
+            v.shuffle(&mut rand::rng());
+            v.sort_by_key(|(_,count)| *count * -1);
+            
+            // check for valid inputs
+            if v[0].0 == -1 {
+                // nothing collected at index 0
+                v.remove(0);
+            }
+            if v.is_empty() {
+                println!("No action selected, idling");
+                continue;
+            }
+            // serialize to proper length
+            v = v[0..POLL_ACTIONS_SENT.min(v.len())].to_vec();
+            let (id, count) = v[0];
+            println!("Voted {} at {} times", id, count);
+            // send out poll stats
+            match JsonHandlers::createPollingJson(v.clone()) {
+                Ok(json)    => {
+                    let _ = bcTx.send(
+                        SilEvent::PollUpdate(
+                            json.to_string()
+                    )); 
+                },
+                Err(e)      => { println!("{e}"); },
+            }
+            // ra_packet builds the byte collection through shifting to send via UDP
+            let _ = udp.send_to(&ra_packet(id, 1), &udpAddress).await;  // press
+            time::sleep(Duration::from_millis(MS_PER_FRAME)).await;
+            let _ = udp.send_to(&ra_packet(id, 0), &udpAddress).await;  // unpress
         }
         _ = token.cancelled() => {
             break;
