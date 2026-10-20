@@ -137,10 +137,8 @@ async fn main() {
 
     let (raTx, raSd) = (bcTx.clone(), sdToken.clone());
     let raControllerParser = tokio::spawn(async move {
-        RetroArchHandler::handleRaDemocracy(
-            UdpSocket::bind(format!("{raAddr}:0"))
-                .await
-                .expect("failed to bind UDP socket"), 
+        RetroArchHandler::handleRa(
+            raAddr.to_string(), 
             format!("{raAddr}:{raPort}"), 
             raTx,
             raSd
