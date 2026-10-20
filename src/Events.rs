@@ -10,7 +10,7 @@ pub enum SilEvent {
     ClientDisconnected(u16),    // u16 of the Client Disconnection
     Input(Input),               // Controller Input
     PollUpdate(String),         // JSON string of poll updates
-    AdminMessage(String),       // 
+    AdminMessage(AdminAction),  // 
     ClientError(u16, String),   // Client transmitted error from connection
     ShutdownSignal(bool),       // access token canceled
 }

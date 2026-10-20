@@ -12,7 +12,13 @@ use rand::{
         seq::SliceRandom,
         // thread_rng,
 };
-use crate::{JsonHandlers, SilEvent, Events::Gamemode};
+use crate::{JsonHandlers, Events::{
+    AdminAction, 
+    SilEvent, 
+    Input, 
+    Gamemode,
+    },
+};
 
 const MS_PER_FRAME      : u64 = 17;
 const VOTING_PERIOD     : u64 = 2000;
@@ -53,18 +59,12 @@ async fn GamemodeParser(
         // message recieved received
         Ok(result) = bcRx.recv() => {
             match result {
-                SilEvent::AdminMessage(_msg)       => {
-                    match "democracy" {
-                        "democracy" => {
-                            waTx.send(Gamemode::Democracy);
+                SilEvent::AdminMessage(action)       => {
+                    match action {
+                        AdminAction::GamemodeChange(gm) => {
+                            waTx.send(gm);
                         }
-                        "anarcy" => {
-                            waTx.send(Gamemode::Anarchy);
-                        }
-                        "pause" => {
-                            waTx.send(Gamemode::Paused);
-                        }
-                        &_ => {}
+                        _ => {}
                     }
                 }
                 _ => {} // we don't care
