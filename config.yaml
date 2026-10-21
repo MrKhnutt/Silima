@@ -19,4 +19,26 @@ paths:
   files:
     manifest: "manifest.json"
 
-server-defaults:
+server-defaults: &server-defaults
+  ms-input: 17
+  voting-period: 2000
+  poll-actions: 4
+  polling: true
+  paused: false
+
+gamemode-defaults:
+  democracy-defaults:
+    <<: *server-defaults
+
+  anarchy-defaults:
+    <<: *server-defaults
+    polling: false  # pending implementation of circular poll
+    voting period: 8
+
+  pause-defaults:
+    <<: *server-defaults
+    polling: false
+    paused: true
+  initial-state: 0
+  # 0 is democracy, 1 is anarcy, 2 is paused
+
