@@ -132,6 +132,7 @@ pub async fn handleClient(
                     token.cancel();
                     break;
                 }
+                _ => {}
             }
         }
         // shutdown signal recieved

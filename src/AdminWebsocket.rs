@@ -27,7 +27,6 @@ pub async fn handleClient(
     token   : CancellationToken,
     bcTx    : broadcast::Sender<SilEvent>
 ){
-    println!("Admin connected");
 
     let (
         mut wsSender, // Messages TO the admin
@@ -35,6 +34,7 @@ pub async fn handleClient(
     ) = socket.split();
     let mut bcRx = bcTx.subscribe();
 
+    println!("Admin connected");
 
     loop{ tokio::select! {
         Some(result) = wsReceiver.next() => {
@@ -69,20 +69,22 @@ pub async fn handleClient(
         // recieved broadcast
         Ok(result) = bcRx.recv() => {
             match result {
-                SilEvent::ClientConnected(_)            => {}
-                SilEvent::ClientDisconnected(_)         => {}
-                SilEvent::Input(_)                      => {}
                 SilEvent::PollUpdate(pollJson)          => {
                     let _ = wsSender.send(Message::Text(
                         pollJson.into()
                     )).await;
                 }
-                SilEvent::AdminMessage(_)               => {}
-                SilEvent::ClientError(_,_)              => {}
+                SilEvent::ServerError(msg)      => {
+                    println!("{msg}");
+                }
+                SilEvent::ClientError(uid, msg)      => {
+                    println!("{uid}:{msg}");
+                }
                 SilEvent::ShutdownSignal(_)             => {
                     token.cancel();
                     break;
                 }
+                _ => {}
             }
         }
         _ = token.cancelled() => {
@@ -102,16 +104,11 @@ pub async fn adminMessageParser(
     loop { tokio::select! {
         Ok(result) = bcRx.recv() => {
             match result {
-                SilEvent::ClientConnected(_)            => {}
-                SilEvent::ClientDisconnected(_)         => {}
-                SilEvent::Input(_)                      => {}
-                SilEvent::PollUpdate(_)                 => {}
-                SilEvent::AdminMessage(_)               => {}
-                SilEvent::ClientError(_,_)              => {}
                 SilEvent::ShutdownSignal(_)             => {
                     token.cancel();
                     break;
                 }
+                _ => {}
             }
         }
         _ = token.cancelled() => {
