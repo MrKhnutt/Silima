@@ -12,8 +12,11 @@ svg:
     strip_comments: true
 
 paths:
-  icons: "media/background/"
-  pyLibs: "libs"
+  dir:
+    icons: "media/background/"
+    pyLibs: "libs"
 
-fileNames:
-  manifest: "manifest.json"
+  files:
+    manifest: "manifest.json"
+
+server-defaults:

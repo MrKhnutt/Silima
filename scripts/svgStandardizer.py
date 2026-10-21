@@ -4,7 +4,10 @@ with open("config.yaml", "r") as f:
 
 import sys
 from pathlib import Path
-sys.path.insert(0, str(Path(__file__).resolve().parent / config["paths"]["pyLibs"]))
+sys.path.insert(
+    0, 
+    str(Path(__file__).resolve().parent / config["paths"]["dir"]["pyLibs"])
+    )
 
 import lxml.etree as ET
 from libs.svgpathtools import svg2paths2
@@ -15,8 +18,8 @@ from io import BytesIO
 
 import json
 
-ICONS_DIR   = config["paths"]["icons"]
-MANIFEST    = config["fileNames"]["manifest"]
+ICONS_DIR   = config["paths"]["dir"]["icons"]
+MANIFEST    = config["paths"]["files"]["manifest"]
 PRECISION   = config["svg"]["elements"]["precision"]
 
 with open(ICONS_DIR + MANIFEST) as file:
