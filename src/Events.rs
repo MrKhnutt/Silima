@@ -12,6 +12,7 @@ pub enum SilEvent {
     PollUpdate(String),         // JSON string of poll updates
     AdminMessage(AdminAction),  // 
     ClientError(u16, String),   // Client transmitted error from connection
+    ServerError(String),        // Server transmitted error
     ShutdownSignal(bool),       // access token canceled
 }
 
@@ -26,4 +27,19 @@ pub enum AdminAction {
     GamemodeChange(Gamemode),
     Trivia(u16, usize),
     DemocracyVotingPeriod(usize),
+}
+
+pub enum ServerError {
+    Io(std::io::Error),
+    Yaml(yaml_serde::Error),
+}
+impl From<std::io::Error> for ServerError {
+    fn from(err: std::io::Error) -> Self {
+        ServerError::Io(err)
+    }
+}
+impl From<yaml_serde::Error> for ServerError {
+    fn from(err: yaml_serde::Error) -> Self {
+        ServerError::Yaml(err)
+    }
 }
