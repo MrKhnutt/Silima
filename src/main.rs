@@ -24,6 +24,7 @@ mod JsonHandlers;
 mod Networking;
 mod AdminWebsocket;
 mod Events;
+mod ConfigYaml;
 
 use crate::Events::{SilEvent, Input};
 
