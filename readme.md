@@ -1,20 +1,39 @@
 # ![Alt text](./media/logo/silimaLogoWhite.svg)
 
+Silima is an open-source, self-hosted platform for collective networked gameplay. It lets groups of users connect through a browser, vote on or submit controller inputs, view shared gameplay, and interact with trivia and educational content while a host system runs and manages the played game.
+
+> **Status:** Silima is currently being actively developed.
+
 ## ToDo List
+
+### Currently Working On:
+
+- Limited Video Streaming
+- Backend API
+- Frontend Devolvement with API access
+
+### Suspended:
+
+- Administration Tools
+- Thread sync and Alerts
+
+<details> 
+
+<summary><strong>Full ToDo List</strong></summary>
 
 ### Server Side
 
 - 🔨 Atomic Client Identity
-- ⬜ Per User Voting
+- ✅ Per User Voting
 - ✅ Shared State Architecture
-- ⏸️ Vote Resolution
-    - ⏸️ Game Modes
-        - ⬜ Anarchy
+- 🔨 Vote Resolution
+    - ✅ Game Modes
+        - ✅ Anarchy
         - ✅ Democracy
     - ⬜ Game Mode Voting
     - 🔨 Spam Protection
     - ✅ Polling Behavior Broadcast
-- ⏸️ Websocket Lifecycle
+- 🔨 Websocket Lifecycle
 - ⬜ Anonymous IP Binding
 - 🔨 Vote Resolution
 - ⬜ Networking Controller Binding
@@ -41,13 +60,15 @@
 ### UX
 
 - ⬜ Randomly Generated Nicknames/Avatars
+- ⬜ Limited Chat
+- ⬜ Reactions & Explosions
 - ⬜ Spectator Mode
 - ⬜ Settings and Keybindings in cache?
 - ⬜ Frame-per-Action Streaming
 
 ### Administration
 
-- 🔨 Administration Page
+- ⏸️ Administration Page
 - ⬜ Lockable Controls
 - ⬜ Game Mode Toggle
 - ⬜ Theme Selection
@@ -62,16 +83,33 @@
 
 ### Misc
 
-- ⬜ Script to Normalize SVGs (Python?)
+- ✅ Script to Normalize SVGs
+- ⬜ Run script if icons have changed
+- ⬜ Manually invoke script from build command/admin menu
+
+</details> 
+
+## Features
+
+- Browser-based game controller
+- Real-time communication using WebSockets
+- Vote-based input aggregation
+- RetroArch network controller integration
+- Teacher keyboard control remains available
 
 ## Technologies Used
 
-<!-- ## Requirements -->
-
-## Installation
-
-## Usage
+- Rust
+- Axum
+- Tokio
+- HTML / CSS / JavaScript
+- WebSockets
+- UDP / RetroArch
 
 ## Documentation
 
+Documentation is currently in development. For now, see this README and the source comments for setup and implementation details.
+
 ## License
+
+No license has been selected yet.
