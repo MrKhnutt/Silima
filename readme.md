@@ -7,9 +7,9 @@
 - 🔨 Atomic Client Identity
 - ⬜ Per User Voting
 - ✅ Shared State Architecture
-- ⏸️ Vote Resolution
-    - ⏸️ Game Modes
-        - ⬜ Anarchy
+- 🔨 Vote Resolution
+    - ✅ Game Modes
+        - ✅ Anarchy
         - ✅ Democracy
     - ⬜ Game Mode Voting
     - 🔨 Spam Protection
@@ -41,13 +41,15 @@
 ### UX
 
 - ⬜ Randomly Generated Nicknames/Avatars
+- ⬜ Limited Chat
+- ⬜ Reactions & Explosions
 - ⬜ Spectator Mode
 - ⬜ Settings and Keybindings in cache?
 - ⬜ Frame-per-Action Streaming
 
 ### Administration
 
-- 🔨 Administration Page
+- ⏸️ Administration Page
 - ⬜ Lockable Controls
 - ⬜ Game Mode Toggle
 - ⬜ Theme Selection
