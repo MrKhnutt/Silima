@@ -93,6 +93,9 @@ Silima is an open-source, self-hosted platform for collective networked gameplay
 - ✅ Script to Normalize SVGs
 - ⬜ Run script if icons have changed
 - ⬜ Manually invoke script from build command/admin menu
+- ⬜ SHA256 Checksum generation on releases
+- ⬜ Metadata generation for Windows
+- ⬜ OSS Code signing through Signpath
 
 </details> 
 
