@@ -1,0 +1,87 @@
+% Typography
+\usepackage[T1]{fontenc}
+\usepackage[utf8]{inputenc}
+\usepackage[scaled=0.95]{helvet}
+\renewcommand{\familydefault}{\sfdefault}
+\usepackage{microtype}
+
+% Page layout
+\usepackage[
+    letterpaper,
+    margin=1in,
+    headheight=16pt,
+    headsep=24pt
+]{geometry}
+
+% Paragraphs
+\usepackage{parskip}
+\setlength{\parindent}{0pt}
+\setlength{\parskip}{8pt}
+
+% Colors
+\usepackage{xcolor}
+\definecolor{silimaBlue}{HTML}{254D73}
+\definecolor{silimaDark}{HTML}{182A42}
+\definecolor{silimaGray}{HTML}{64748B}
+
+% Section headings
+\usepackage{titlesec}
+
+\titleformat{\section}
+    {\Large\bfseries\color{silimaDark}}
+    {\thesection}
+    {0.8em}
+    {}
+    [\vspace{3pt}\titlerule]
+
+\titleformat{\subsection}
+    {\large\bfseries\color{silimaBlue}}
+    {\thesubsection}
+    {0.8em}
+    {}
+
+\titlespacing*{\section}{0pt}{22pt}{12pt}
+\titlespacing*{\subsection}{0pt}{16pt}{6pt}
+
+% Lists
+\usepackage{enumitem}
+\setlist[itemize]{
+    leftmargin=1.5em,
+    itemsep=3pt,
+    topsep=5pt
+}
+\setlist[enumerate]{
+    leftmargin=1.5em,
+    itemsep=3pt,
+    topsep=5pt
+}
+
+% Header and footer
+\usepackage{fancyhdr}
+\pagestyle{fancy}
+\fancyhf{}
+
+\fancyhead[L]{\small\bfseries SILIMA}
+\fancyhead[R]{\small\color{silimaGray}SECURITY REFERENCE}
+\fancyfoot[C]{\small\color{silimaGray}\thepage}
+
+\renewcommand{\headrulewidth}{0.4pt}
+\renewcommand{\footrulewidth}{0pt}
+
+% Plain pages, including the title page
+\fancypagestyle{plain}{%
+    \fancyhf{}
+    \fancyfoot[C]{\small\thepage}
+    \renewcommand{\headrulewidth}{0pt}
+}
+
+% File inclusion
+\usepackage{verbatim}
+
+% Links (load near end)
+\usepackage[
+    colorlinks=true,
+    linkcolor=silimaBlue,
+    urlcolor=silimaBlue,
+    citecolor=silimaBlue
+]{hyperref}

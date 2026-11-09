@@ -1,0 +1,105 @@
+
+\section{Network Activity}
+
+Silima is designed to operate entirely within a local area
+network (LAN). No internet connection, external cloud service,
+or third-party infrastructure is required for normal operation.
+
+\subsection{Network Ports}
+
+Silima uses the following network ports and protocols:
+
+\begin{description}
+    \item[TCP 42699:]
+    HTTP and WebSocket service for student interfaces.
+
+    \item[TCP 42614:]
+    HTTP and WebSocket service for administrative interfaces.
+
+    \item[UDP 55400:]
+    RetroArch Network RetroPad controller interface.
+\end{description}
+
+\subsection{Data Privacy}
+
+Silima does not require students to provide names, email
+addresses, student identification numbers, or other
+personally identifying information.
+
+No telemetry or student metadata is intentionally collected
+or stored by the application. Gameplay inputs are transmitted
+to the locally hosted server for processing.
+
+Some application resources may be cached by the student's
+web browser using standard browser caching mechanisms,
+as with ordinary websites. These resources are subject
+to the browser's normal caching and data removal policies.
+
+\subsection{Connection Security}
+
+Silima currently uses HTTP and unencrypted WebSocket
+connections. HTTPS and encrypted WebSocket connections
+are not supported.
+
+As a result, network traffic is not encrypted in transit.
+Silima should therefore be deployed only on networks where
+access to its services can be appropriately restricted.
+
+Network administrators may use existing firewall rules
+and network segmentation to control access to Silima's
+services.
+
+\subsection{Traffic Management}
+
+Silima implements client-side message rate limiting to
+reduce unnecessary network traffic.
+
+The current implementation restricts the browser client
+to approximately 45 outgoing application messages per
+second, or one message every 22 milliseconds.
+
+This restriction is implemented within the browser and
+can be bypassed by a user modifying the client or using
+a custom network client. It is intended to reduce
+unnecessary traffic during normal operation rather than
+provide protection against malicious network flooding.
+
+
+\subsection{Deployment Recommendations}
+
+Silima is intended for deployment on a trusted local area
+network (LAN), such as a school or classroom network.
+No internet connection is required for operation.
+
+Silima communicates with RetroArch through a local UDP
+connection on the host computer. This communication does
+not need to be exposed to other devices on the network.
+
+Student devices require access to TCP port 42699 to
+interact with the application. Administrative access
+is provided separately through TCP port 42614.
+
+Network administrators are encouraged to:
+\begin{itemize}
+    \item Restrict administrative access to the host
+          computer or other explicitly authorized devices.
+    \item Allow student devices to access only the
+          client-facing service.
+    \item Avoid exposing Silima's services to the
+          public internet.
+    \item Use existing firewall rules and network
+          segmentation where appropriate.
+\end{itemize}
+
+Silima currently uses unencrypted HTTP and WebSocket
+connections. The application does not request personal
+student information, and gameplay inputs primarily
+consist of simple controller commands.
+
+Although encryption is not currently implemented,
+administrators should be aware that network traffic
+may be intercepted or modified by devices with
+sufficient network access.
+
+Encrypted communication may be considered in future
+releases.

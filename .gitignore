@@ -4,3 +4,15 @@
 **/*/manifest.json
 /sandbox
 /scripts/libs/*
+
+documentation/**/*.out
+documentation/**/*.pdf
+documentation/**/*.toc
+documentation/**/*.synctex.gz
+documentation/**/*.fdb
+documentation/**/*.fls
+documentation/**/*.log
+documentation/**/*.aux
+documentation/**/*.fdb_latexmk
+
+Silima-Information-Security-Reference.pdf

@@ -1,0 +1,43 @@
+
+\section{Administrative Access}
+
+Silima provides a separate administrative interface for
+managing application functionality. This interface operates
+on TCP port 42614 and is intended for use by the host
+teacher or an authorized administrator.
+
+\subsection{Access Restrictions}
+
+Silima currently supports only one active administrative
+connection at a time.
+
+The administrative interface becomes available when the
+Silima server starts. Under normal operation, the host
+connects to this interface immediately after startup.
+
+This restriction limits simultaneous administrative
+connections but does not provide user authentication.
+
+\subsection{Authentication}
+
+Password-based authentication is planned but has not
+yet been implemented.
+
+Currently, administrative access relies on restricting
+network access to the administrative service. Devices
+capable of reaching the administrative port may
+potentially establish an administrative connection
+when one is available.
+
+Administrators are advised to restrict TCP port 42614
+to trusted devices through firewall rules or network
+configuration.
+
+\subsection{Security Considerations}
+
+Administrative communication currently uses unencrypted
+HTTP and WebSocket connections.
+
+For this reason, the administrative interface should
+not be exposed to untrusted networks or the public
+internet.
