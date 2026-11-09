@@ -132,4 +132,12 @@ For information about network activity, software dependencies, permissions, and 
 
 ## License
 
-No license has been selected yet.
+Silima is free and open-source software licensed under the GNU General Public License, Version 3 (GPLv3).
+
+You are free to use, study, modify, and redistribute Silima. Any modified versions distributed to others must also comply with GPLv3, including its source-code availability requirements.
+
+Silima is provided without warranty or guaranteed technical support.
+
+See LICENSE for the complete license terms.
+
+Note: This license applies to Silima itself. Third-party software, copyrighted games, and associated assets remain subject to their respective licenses.
