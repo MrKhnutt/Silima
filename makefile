@@ -12,6 +12,7 @@ python-setup:
 	python3 -m pip install --target ./scripts/libs/ lxml svgpathtools scour pyyaml pillow cairosvg
 
 .PHONY: security-distributable
+.PHONY: usage-distributable
 
 security-distributable:
 	@set -eu; \
@@ -22,3 +23,13 @@ security-distributable:
 			-jobname=SECURITY \
 			-outdir="$$build_dir" main.tex; \
 		cp "$$build_dir/SECURITY.pdf" ../../Silima-Information-Security-Reference.pdf
+
+usage-distributable:
+	@set -eu; \
+		build_dir=$$(mktemp -d); \
+		trap 'rm -rf "$$build_dir"' EXIT; \
+		cd documentation/fair-use; \
+		latexmk -pdf -interaction=nonstopmode -halt-on-error \
+			-jobname=FAIRUSE \
+			-outdir="$$build_dir" main.tex; \
+		cp "$$build_dir/FAIRUSE.pdf" ../../Silima-Game-Content-Usage.pdf

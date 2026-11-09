@@ -1,0 +1,100 @@
+\usepackage[T1]{fontenc}
+\usepackage[utf8]{inputenc}
+\usepackage{lmodern}
+\usepackage{microtype}
+\usepackage{needspace}
+
+\usepackage[
+    letterpaper,
+    left=1in,
+    right=1in,
+    top=0.95in,
+    bottom=0.95in,
+    headheight=15pt,
+    headsep=18pt
+]{geometry}
+
+\usepackage{setspace}
+\setstretch{1.12}
+
+\setlength{\parindent}{0pt}
+\setlength{\parskip}{0.55em}
+
+\usepackage{xcolor}
+
+\definecolor{documentInk}{HTML}{20252B}
+\definecolor{documentMuted}{HTML}{5D6772}
+\definecolor{documentAccent}{HTML}{31465E}
+
+\usepackage{titlesec}
+
+\titleformat{\section}
+    {\normalfont\Large\bfseries\color{documentInk}}
+    {\thesection.}
+    {0.65em}
+    {}
+    [\vspace{2pt}\color{documentMuted}\titlerule]
+
+\titleformat{\subsection}
+    {\normalfont\large\bfseries\color{documentAccent}}
+    {\thesubsection}
+    {0.65em}
+    {}
+
+\titleformat{\subsubsection}
+    {\normalfont\normalsize\bfseries\color{documentInk}}
+    {\thesubsubsection}
+    {0.65em}
+    {}
+
+\titlespacing*{\section}{0pt}{1.8em}{0.9em}
+\titlespacing*{\subsection}{0pt}{1.3em}{0.45em}
+\titlespacing*{\subsubsection}{0pt}{1em}{0.3em}
+
+
+\usepackage{enumitem}
+
+\setlist[itemize]{
+    leftmargin=1.5em,
+    topsep=0.4em,
+    itemsep=0.15em
+}
+
+\setlist[enumerate]{
+    leftmargin=1.7em,
+    topsep=0.4em,
+    itemsep=0.15em
+}
+
+\usepackage{fancyhdr}
+\pagestyle{fancy}
+\fancyhf{}
+
+\fancyhead[L]{
+    \footnotesize\textsc{Silima}
+}
+
+\fancyhead[R]{
+    \footnotesize\color{documentMuted}
+    Copyright and Broadcasting Reference
+}
+
+\fancyfoot[C]{
+    \footnotesize\thepage{}
+}
+
+\renewcommand{\headrulewidth}{0.35pt}
+\renewcommand{\footrulewidth}{0pt}
+
+\usepackage{verbatim}
+\usepackage[
+    colorlinks=true,
+    linkcolor=documentAccent,
+    urlcolor=documentAccent,
+    citecolor=documentAccent
+]{hyperref}
+
+\urlstyle{same}
+\widowpenalty=10000
+\clubpenalty=10000
+\displaywidowpenalty=10000
