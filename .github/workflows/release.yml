@@ -12,7 +12,47 @@ env:
   CARGO_TERM_COLOR: always
 
 jobs:
+  
+  documentation:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v6
+
+      - name: Install LaTeX dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y \
+            latexmk \
+            texlive-latex-base \
+            texlive-latex-recommended \
+            texlive-latex-extra \
+            texlive-fonts-recommended
+
+      - name: Generate release information
+        env:
+          RELEASE_VERSION: ${{ github.ref_name }}
+          RELEASE_COMMIT: ${{ github.sha }}
+        run: |
+          printf 'Version: %s\nCommit: %s\nBuild date: %s\n' \
+            "$RELEASE_VERSION" \
+            "$RELEASE_COMMIT" \
+            "$(date -u +%Y-%m-%dT%H:%M:%SZ)" \
+            > documentation/RELEASEINFO
+
+      - name: Build security documentation
+        run: make security-distributable
+
+      - name: Upload security documentation
+        uses: actions/upload-artifact@v5
+        with:
+          name: silima-security-documentation
+          path: Silima-Information-Security-Reference.pdf
+          if-no-files-found: error
+  
   build:
+    needs: documentation
     strategy:
       matrix:
         include:
@@ -26,6 +66,13 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@v6
+
+      
+      - name: Download security documentation
+        uses: actions/download-artifact@v8
+        with:
+          name: silima-security-documentation
+          path: .
 
       - name: Build release
         run: cargo build --release --verbose
@@ -65,7 +112,8 @@ jobs:
           if (Test-Path README.md) {
             Copy-Item LICENSE.md package/
           }
-
+          Copy-Item Silima-Information-Security-Reference.pdf package/
+          
           Compress-Archive `
             -Path package/* `
             -DestinationPath silima-windows-x64.zip
@@ -94,6 +142,8 @@ jobs:
           [ -f README.md ] && cp README.md package/
           [ -f SECURITY.md ] && cp SECURITY.md package/
           [ -f LICENSE ] && cp LICENSE package/
+
+          cp Silima-Information-Security-Reference.pdf package/
 
           tar -czf silima-linux-x64.tar.gz -C package .
 
