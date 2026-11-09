@@ -8,14 +8,14 @@ Silima is an open-source, self-hosted platform for collective networked gameplay
 
 ### Currently Working On:
 
-- Limited Video Streaming
+- Administration Tools
 - Backend API
 - Frontend Devolvement with API access
 
 ### Suspended:
 
-- Administration Tools
 - Thread sync and Alerts
+- Server hashing
 
 <details> 
 
@@ -23,7 +23,7 @@ Silima is an open-source, self-hosted platform for collective networked gameplay
 
 ### Server Side
 
-- 🔨 Atomic Client Identity
+- ✅ Atomic Client Identity
 - ✅ Per User Voting
 - ✅ Shared State Architecture
 - 🔨 Vote Resolution
@@ -38,9 +38,9 @@ Silima is an open-source, self-hosted platform for collective networked gameplay
 - 🔨 Vote Resolution
 - ⬜ Networking Controller Binding
 - ✅ Build Hashing and directory manifest
-- 🔨 Build Sync
-- 🔨 JS Hash Query Strings for Cache Updates
-- 🔨 Build.rs hash comparison for for manifest updates
+- ⏸️ Build Sync
+- ⏸️ JS Hash Query Strings for Cache Updates
+- ⏸️ Build.rs hash comparison for for manifest updates
 
 ### Client UI
 
@@ -85,7 +85,11 @@ Silima is an open-source, self-hosted platform for collective networked gameplay
 
 - ⬜ Retroarch Process Detection
 - ⬜ Window and Frame capture & Transmission
-- ⬜ Client Interaction & Trivia Overlays
+- Client Interaction & Trivia Overlays
+    - ⬜ Server Reaction (Explosion)
+    - ⬜ Server Transmission/Client Caputre
+    - ⬜ Democracy Trivia
+    - ⬜ Anarchal Trivia
 - ⬜ Emulation Setting Generation
 
 ### Misc
@@ -115,6 +119,10 @@ Silima is an open-source, self-hosted platform for collective networked gameplay
 - HTML / CSS / JavaScript
 - WebSockets
 - UDP / RetroArch
+
+## Security
+
+TODO
 
 ## Documentation
 
