@@ -81,11 +81,21 @@ Silima is an open-source, self-hosted platform for collective networked gameplay
 - ⬜ Frame-per-Action Toggle
 - ⬜ Config Work
 
+### Emulation Integration Layer
+
+- ⬜ Retroarch Process Detection
+- ⬜ Window and Frame capture & Transmission
+- ⬜ Client Interaction & Trivia Overlays
+- ⬜ Emulation Setting Generation
+
 ### Misc
 
 - ✅ Script to Normalize SVGs
 - ⬜ Run script if icons have changed
 - ⬜ Manually invoke script from build command/admin menu
+- ⬜ SHA256 Checksum generation on releases
+- ⬜ Metadata generation for Windows
+- ⬜ OSS Code signing through Signpath
 
 </details> 
 
