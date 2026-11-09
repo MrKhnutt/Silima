@@ -122,11 +122,13 @@ Silima is an open-source, self-hosted platform for collective networked gameplay
 
 ## Security
 
-TODO
+Silima is designed to operate entirely within a local network without requiring internet access, administrator privileges, or the collection of student information. Communication currently uses unencrypted HTTP and WebSocket connections, and administrative authentication is still under development. Network administrators should restrict access to the administrative interface accordingly.
 
 ## Documentation
 
 Documentation is currently in development. For now, see this README and the source comments for setup and implementation details.
+
+For information about network activity, software dependencies, permissions, and known security limitations, see the Silima Information Security Reference. For information regarding game broadcasting, publisher policies, and copyright considerations, see the Game Content Usage and Copyright Reference.
 
 ## License
 
