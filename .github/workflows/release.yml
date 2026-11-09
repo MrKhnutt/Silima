@@ -59,6 +59,12 @@ jobs:
           if (Test-Path README.md) {
             Copy-Item README.md package/
           }
+          if (Test-Path README.md) {
+            Copy-Item SECURITY.md package/
+          }
+          if (Test-Path README.md) {
+            Copy-Item LICENSE.md package/
+          }
 
           Compress-Archive `
             -Path package/* `
@@ -86,6 +92,8 @@ jobs:
           [ -d media ] && cp -r media package/
           [ -d frontend ] && cp -r frontend package/
           [ -f README.md ] && cp README.md package/
+          [ -f SECURITY.md ] && cp SECURITY.md package/
+          [ -f LICENSE ] && cp LICENSE package/
 
           tar -czf silima-linux-x64.tar.gz -C package .
 
