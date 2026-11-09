@@ -1,0 +1,63 @@
+\section{Computer Permissions}
+
+Silima does not require administrator or root privileges to operate.
+The application runs with the permissions of the user who launches it
+and does not require installation through a system-level installer.
+
+Silima does not:
+\begin{itemize}
+    \item Install system services or persistent background processes.
+    \item Modify operating system startup settings.
+    \item Inject code into other applications.
+    \item Install browser extensions or additional browser software.
+    \item Modify operating system configuration.
+\end{itemize}
+
+\subsection{Filesystem and Network Access}
+
+Silima requires read and write access to its application directory
+for managing configuration files, application resources, and locally
+generated assets.
+
+The application also requires access to its configured network ports
+to communicate with connected clients and RetroArch. Depending on
+the operating system and local security policies, firewall exceptions
+may need to be configured by a network administrator.
+
+All application operations are performed with the permissions of
+the user running Silima.
+
+\subsection{Optional Asset Optimization}
+
+Silima includes an optional Python script for processing and
+optimizing SVG graphical assets used by the browser-based client.
+
+This utility is intended to prepare graphical resources for more
+efficient rendering and does not need to be executed for normal
+application operation.
+
+The script operates locally within Silima's application directory
+and does not require elevated privileges. Running the utility
+may require a local Python installation and its associated
+third-party libraries.
+
+The script does not communicate with external services or
+transmit graphical assets outside the host computer.
+
+\subsection{Uninstallation}
+
+Silima does not require a dedicated uninstaller.
+
+To uninstall Silima:
+\begin{enumerate}
+    \item Terminate the running application.
+    \item Delete the Silima application directory.
+    \item Optionally clear browser cache and site data associated
+          with Silima on connected devices.
+    \item Remove any firewall exceptions manually configured
+          for Silima, if applicable.
+\end{enumerate}
+
+Silima does not create system services, startup entries, or
+operating system registry modifications that require additional
+removal procedures.
