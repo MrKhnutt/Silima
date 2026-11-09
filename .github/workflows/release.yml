@@ -44,11 +44,21 @@ jobs:
       - name: Build security documentation
         run: make security-distributable
 
+      - name: Build usage documentation
+        run: make usage-distributable
+
       - name: Upload security documentation
         uses: actions/upload-artifact@v5
         with:
           name: silima-security-documentation
           path: Silima-Information-Security-Reference.pdf
+          if-no-files-found: error
+      
+      - name: Upload usage documentation
+        uses: actions/upload-artifact@v5
+        with:
+          name: silima-usage-documentation
+          path: Silima-Game-Content-Usage.pdf
           if-no-files-found: error
   
   build:
@@ -72,6 +82,12 @@ jobs:
         uses: actions/download-artifact@v8
         with:
           name: silima-security-documentation
+          path: .
+
+      - name: Download usage documentation
+        uses: actions/download-artifact@v8
+        with:
+          name: silima-usage-documentation
           path: .
 
       - name: Build release
@@ -113,6 +129,7 @@ jobs:
             Copy-Item LICENSE package/
           }
           Copy-Item Silima-Information-Security-Reference.pdf package/
+          Copy-Item Silima-Game-Content-Usage.pdf package/
           
           Compress-Archive `
             -Path package/* `
@@ -144,6 +161,7 @@ jobs:
           [ -f LICENSE ] && cp LICENSE package/
 
           cp Silima-Information-Security-Reference.pdf package/
+          cp Silima-Game-Content-Usage.pdf package/
 
           tar -czf silima-linux-x64.tar.gz -C package .
 
