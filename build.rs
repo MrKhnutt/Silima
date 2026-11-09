@@ -167,4 +167,12 @@ fn main() {
             println!("cargo::error=Manifest failed on {BG_DIR}: {e}");
         }
     };
+
+    // Windows Icon embedding
+    if std::env::var("CARGO_CFG_TARGET_OS").as_deref() == Ok("windows") {
+        let mut res = winresource::WindowsResource::new();
+
+        res.set_icon("media/logo/icons/silimaColor.ico");
+        res.compile().unwrap();
+    }
 }
