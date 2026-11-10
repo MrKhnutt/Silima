@@ -4,6 +4,22 @@ Silima is an open-source, self-hosted platform for collective networked gameplay
 
 > **Status:** Silima is currently being actively developed.
 
+## Quick Start
+
+### Windows
+1. Download and extract the latest Windows release.
+2. Start RetroArch and enable the Network RetroPad.
+3. Run `silima.exe`.
+4. Open the address displayed by Silima on student devices connected to the same local network.
+
+### Linux
+1. Download and extract the latest Linux release.
+2. Start RetroArch and enable the Network RetroPad.
+3. Run `./silima`.
+4. Open the address displayed by Silima on student devices connected to the same local network.
+
+Silima does not require installation or administrator privileges for normal use.
+
 ## ToDo List
 
 ### Currently Working On:
