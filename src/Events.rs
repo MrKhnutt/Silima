@@ -16,7 +16,7 @@ pub enum SilEvent {
     ShutdownSignal(bool),       // access token canceled
 }
 
-#[derive(PartialEq, Clone, Copy)]
+#[derive(PartialEq, Clone, Copy, Debug)]
 pub enum Gamemode {
     Anarchy,
     Democracy,
