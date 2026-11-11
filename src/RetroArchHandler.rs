@@ -14,15 +14,9 @@ use rand::{
         // thread_rng,
 };
 use crate::{
-    JsonHandlers, 
-    Events::{
-        AdminAction, 
-        SilEvent, 
-        Input, 
-        Gamemode,
-        ServerError,
-    },
-    ConfigYaml::GamemodeDefaults,
+    ConfigYaml::GamemodeDefaults, Events::{
+        AdminAction::{self, GamemodeChange}, Gamemode, Input, ServerError, SilEvent,
+    }, JsonHandlers,
 };
 
 #[derive(serde::Deserialize, Clone)]
@@ -68,6 +62,9 @@ async fn GamemodeParser(
 ){
     let mut bcRx = bcTx.subscribe();
 
+    let mut pauseToggle: bool = false;
+    let mut stateList = [Gamemode::Paused, Gamemode::Paused];
+
     loop { tokio::select! {
         // message recieved received
         Ok(result) = bcRx.recv() => {
@@ -75,7 +72,24 @@ async fn GamemodeParser(
                 SilEvent::AdminMessage(action)       => {
                     match action {
                         AdminAction::GamemodeChange(gm) => {
-                            waTx.send(gm);
+                            if gm == Gamemode::Paused && !pauseToggle {
+                                pauseToggle = true;
+                                stateList[1] = stateList[0];
+                                stateList[0] = gm;
+                                waTx.send(gm);
+                            } else if gm == Gamemode::Paused && pauseToggle {
+                                pauseToggle = false;
+                                // resume previous state
+                                let tempGamestate = stateList[1];
+                                stateList[1] = stateList[0];
+                                stateList[0] = tempGamestate;
+                                waTx.send(tempGamestate);
+                            } else {
+                                stateList[1] = stateList[0];
+                                stateList[0] = gm;
+                                waTx.send(gm);
+                            }
+                            println!("gamestate set to {:?}", stateList[0]);
                         }
                         _ => {}
                     }
@@ -128,6 +142,8 @@ async fn gamemode(
             cfg.gamemodeDefaults.initial_state
         ).to_string()
     ));
+    
+    bcTx.send(SilEvent::AdminMessage(GamemodeChange(state)));
 
     loop {
     // pause state awaiting gamemode set

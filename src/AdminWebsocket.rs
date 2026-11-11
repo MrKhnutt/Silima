@@ -11,10 +11,7 @@ use tokio_util::sync::CancellationToken;
 
 // use crate::Input;
 use crate::{
-    // ATOMIC_ID, 
-    // JsonHandlers, 
-    // SILIMA_BUILD_JS_HASH, 
-    SilEvent,
+    Events::AdminAction::GamemodeChange, SilEvent,
 };
 
 /// Creates a websocket that facilitiates connection between the provided webpage
@@ -48,13 +45,34 @@ pub async fn handleClient(
                         Some("shutdown") => { 
                             token.cancel();
                         },
+                        Some("vote-state") => {
+                            match jsonMsg.get("value").and_then(|v| v.as_u64()) {
+                                Some(0) => {
+                                    bcTx.send(SilEvent::AdminMessage(
+                                        GamemodeChange(crate::Events::Gamemode::Anarchy)));
+                                    println!("Setting gamemode to Anarchy");
+                                }
+                                Some(1) => {
+                                    bcTx.send(SilEvent::AdminMessage(
+                                        GamemodeChange(crate::Events::Gamemode::Democracy)));
+                                    println!("Setting gamemode to Democracy");
+                                }
+                                Some(2) => {
+                                    bcTx.send(SilEvent::AdminMessage(
+                                        GamemodeChange(crate::Events::Gamemode::Paused)));
+                                    println!("Toggling Pause State");
+                                }
+                                Some(unknown) => { println!("Unknown type received from Admin: {unknown}"); },
+                                None => { println!("Unknown state change recieved from Admin: None")}
+                            }
+                        }
                         Some(unknown) => { println!("Unknown type received from Admin: {unknown}"); },
                         None => { continue; }
                     };
                 }
                 Ok(Message::Close(_)) => {
                     println!("Client disconnected");
-                    token.cancel();
+                    // token.cancel();
                     break;
                 }
                 // Any other result

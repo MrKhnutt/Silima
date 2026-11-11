@@ -301,11 +301,13 @@ function sendMessage(message) {
 //    ADMIN CONTROLS
 // ========================= */
 
-// toggleVoting.addEventListener("click", () => {
-//     sendMessage({
-//         type: "toggle_voting"
-//     });
-// });
+toggleVoting.addEventListener("click", () => {
+    console.log("asdf")
+    sendMessage({
+        type: "vote-state",
+        value: 2
+    });
+});
 
 // clearVotes.addEventListener("click", () => {
 //     sendMessage({
