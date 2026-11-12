@@ -58,12 +58,14 @@
             </div>
 
             <div class="stat-row">
-                <span>Voting</span>
-                <span class="status-value">
-                    <span class="status-light offline"
+                <span>Voting State</span>
+                <span id="status-value">
+                    <!-- <span class="status-light offline"
                           id="voting-status-light"></span>
-                    <span id="voting-status">Inactive</span>
+                    <span id="voting-status">Inactive</span> -->
+                    NULL
                 </span>
+                <span id="pause-state" hidden>Paused</span>
             </div>
 
             <div class="stat-row">
@@ -162,9 +164,9 @@
                 Set Anarchy
             </button>
 
-            <button id="clear-votes">
+            <!-- <button id="clear-votes">
                 Clear Votes
-            </button>
+            </button> -->
 
             <div class="setting-control">
                 <label for="voting-period">

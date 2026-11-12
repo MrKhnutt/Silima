@@ -308,18 +308,31 @@ setAnarchy.addEventListener("click", () => {
         type: "vote-state",
         value: 0
     });
+    document.getElementById("pause-state").setAttribute("hidden", "true");
+    document.getElementById("status-value").removeAttribute("hidden");
+    document.getElementById("status-value").innerHTML = "Anarchy";
 });
 setDemocracy.addEventListener("click", () => {
     sendMessage({
         type: "vote-state",
         value: 1
     });
+    document.getElementById("pause-state").setAttribute("hidden", "true");
+    document.getElementById("status-value").removeAttribute("hidden");
+    document.getElementById("status-value").innerHTML = "Democracy";
 });
 toggleVoting.addEventListener("click", () => {
     sendMessage({
         type: "vote-state",
         value: 2
     });
+    if (document.getElementById("pause-state").getAttribute("hidden") == "true") {
+        document.getElementById("status-value").setAttribute("hidden", "true");
+        document.getElementById("pause-state").removeAttribute("hidden");
+    } else {
+        document.getElementById("pause-state").setAttribute("hidden", "true");
+        document.getElementById("status-value").removeAttribute("hidden");
+    };
 });
 
 // clearVotes.addEventListener("click", () => {
