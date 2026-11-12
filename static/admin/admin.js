@@ -40,6 +40,8 @@ const currentPeriod = document.getElementById("current-period");
 const currentWinner = document.getElementById("current-winner");
 
 const toggleVoting = document.getElementById("toggle-voting");
+const setAnarchy = document.getElementById("set-anarchy");
+const setDemocracy = document.getElementById("set-democracy");
 const clearVotes = document.getElementById("clear-votes");
 
 const votingPeriod = document.getElementById("voting-period");
@@ -301,8 +303,19 @@ function sendMessage(message) {
 //    ADMIN CONTROLS
 // ========================= */
 
+setAnarchy.addEventListener("click", () => {
+    sendMessage({
+        type: "vote-state",
+        value: 0
+    });
+});
+setDemocracy.addEventListener("click", () => {
+    sendMessage({
+        type: "vote-state",
+        value: 1
+    });
+});
 toggleVoting.addEventListener("click", () => {
-    console.log("asdf")
     sendMessage({
         type: "vote-state",
         value: 2
