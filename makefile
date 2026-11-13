@@ -14,6 +14,7 @@ python-setup:
 .PHONY: security-distributable
 .PHONY: usage-distributable
 
+# distributable pdf generation through LaTeX
 security-distributable:
 	@set -eu; \
 		build_dir=$$(mktemp -d); \
@@ -24,6 +25,7 @@ security-distributable:
 			-outdir="$$build_dir" main.tex; \
 		cp "$$build_dir/SECURITY.pdf" ../../Silima-Information-Security-Reference.pdf
 
+# distributable pdf generation through LaTeX
 usage-distributable:
 	@set -eu; \
 		build_dir=$$(mktemp -d); \
