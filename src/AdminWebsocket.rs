@@ -11,7 +11,7 @@ use tokio_util::sync::CancellationToken;
 
 // use crate::Input;
 use crate::{
-    Events::AdminAction::GamemodeChange, SilEvent,
+    Events::AdminAction::GamemodeChange, SilEvent, Events::MessageType,
 };
 
 /// Creates a websocket that facilitiates connection between the provided webpage
@@ -101,8 +101,46 @@ pub async fn handleClient(
                 SilEvent::ServerError(msg)      => {
                     println!("{msg}");
                 }
+                SilEvent::ServerMessage(message)      => {
+                    match message {
+                        MessageType::Critical(msg)   => {
+                            println!("‼️ {msg}");
+                        }
+                        MessageType::Error(msg)      => {
+                            println!("❗ {msg}");
+                        }
+                        MessageType::Warning(msg)    => {
+                            println!("⚠️ {msg}");
+                        }
+                        MessageType::Info(msg)       => {
+                            println!("{msg}");
+                        }
+                        MessageType::Ping(msg)       => {
+                            println!("{msg}");
+                        }
+                    }
+                }
                 SilEvent::ClientError(uid, msg)      => {
                     println!("{uid}:{msg}");
+                }
+                SilEvent::ClientMessage(uid, message)      => {
+                    match message {
+                        MessageType::Critical(msg)   => {
+                            println!("‼️ {msg}");
+                        }
+                        MessageType::Error(msg)      => {
+                            println!("❗ {msg}");
+                        }
+                        MessageType::Warning(msg)    => {
+                            println!("⚠️ {msg}");
+                        }
+                        MessageType::Info(msg)       => {
+                            println!("{msg}");
+                        }
+                        MessageType::Ping(msg)       => {
+                            println!("{msg}");
+                        }
+                    }
                 }
                 SilEvent::ShutdownSignal(_)             => {
                     token.cancel();

@@ -10,7 +10,7 @@ use futures_util::{SinkExt, StreamExt};
 use tokio_util::sync::CancellationToken;
 use std::sync::atomic::Ordering;
 
-use crate::Input;
+use crate::{Events::MessageType, Input};
 use crate::{
     ATOMIC_ID, 
     JsonHandlers, 
@@ -83,19 +83,22 @@ pub async fn handleClient(
                         }
                         // other input goes here...
                         Some(unknown) => {
-                            println!("Unrecognized type '{unknown} from {userID}");
-                            Err(format!("Unrecognized type '{unknown} from {userID}").to_string())
+                            let e = format!("Unrecognized type '{unknown} from {userID}");
+                            bcTx.send(SilEvent::ClientMessage(userID, MessageType::Error(e.clone())));
+                            Err(e.to_string())
                         }
                         None =>{
-                            println!("No type decoded from client {userID}");
-                            Err(format!("No type decoded from client {userID}").to_string())
+                            let e = format!("No type decoded from client {userID}");
+                            bcTx.send(SilEvent::ClientMessage(userID, MessageType::Error(e.clone())));
+                            Err(e.to_string())
                         }
                     };
                     match error {
                         Ok(_) => {}
                         Err(e) => {
-                            println!("mpsc failed: {e}");
-                            let _ = bcTx.send(SilEvent::ClientError(userID, e));
+                            // println!("mpsc failed: {e}");
+                            // let _ = bcTx.send(SilEvent::ClientError(userID, e));
+                            let _ = bcTx.send(SilEvent::ClientMessage(userID, MessageType::Error(e)));
                         }
                     }
                 }
@@ -106,28 +109,30 @@ pub async fn handleClient(
                 }
 
                 // Any other result
-                Ok(_) => { 
-                    println!("Unexpected message from {userID}"); 
-                    let _ = bcTx.send(SilEvent::ClientError(userID, "Unexpected message".to_string()));
-                    let _ = bcTx.send(SilEvent::ClientDisconnected(userID));
-                    break;
+                Ok(msg) => { 
+                    // println!("Unexpected message from {userID}"); 
+                    // let _ = bcTx.send(SilEvent::ClientError(userID, "Unexpected message".to_string()));
+                    bcTx.send(SilEvent::ClientMessage(
+                        userID, 
+                        MessageType::Warning(format!("Unexpected message from {userID}")))
+                    );
+                    // bcTx.send(SilEvent::ClientDisconnected(userID));
+                    // break;
                 }
                 Err(error) => {
-                    println!("WebSocket error: {error} from {userID}");
-                    let _ = bcTx.send(SilEvent::ClientError(userID, error.to_string()));
-                    let _ = bcTx.send(SilEvent::ClientDisconnected(userID));
+                    // println!("WebSocket error: {error} from {userID}");
+                    // let _ = bcTx.send(SilEvent::ClientError(userID, error.to_string()));
+                    bcTx.send(SilEvent::ClientMessage(
+                        userID, 
+                        MessageType::Error(format!("WebSocket error: {error} from {userID}")))
+                    );
+                    bcTx.send(SilEvent::ClientDisconnected(userID));
                     break;
                 }
             }
         }
         Ok(result) = bcRx.recv() => {
             match result {
-                SilEvent::ClientConnected(_)            => {}
-                SilEvent::ClientDisconnected(_)         => {}
-                SilEvent::Input(_)                      => {}
-                SilEvent::PollUpdate(_)                 => {}
-                SilEvent::AdminMessage(_)               => {}
-                SilEvent::ClientError(_,_)              => {}
                 SilEvent::ShutdownSignal(_)             => {
                     token.cancel();
                     break;
