@@ -341,20 +341,20 @@ toggleVoting.addEventListener("click", () => {
 //     });
 // });
 
-// applyPeriod.addEventListener("click", () => {
+applyPeriod.addEventListener("click", () => {
 
-//     const period = Number(votingPeriod.value);
+    const period = Number(votingPeriod.value);
 
-//     if (!Number.isFinite(period) || period < 100) {
-//         console.warn("Invalid voting period.");
-//         return;
-//     }
+    if (!Number.isFinite(period) || period < 100) {
+        console.warn("Invalid voting period.");
+        return;
+    }
 
-//     sendMessage({
-//         type: "set_voting_period",
-//         period: period
-//     });
-// });
+    sendMessage({
+        type: "set-voting-period",
+        value: period
+    });
+});
 
 // disconnectClients.addEventListener("click", () => {
 

@@ -66,6 +66,12 @@ pub async fn handleClient(
                                 None => { println!("Unknown state change recieved from Admin: None")}
                             }
                         }
+                        Some("set-voting-period") => {
+                            let period = jsonMsg.get("value").and_then(|v| v.as_u64()).unwrap() as usize;
+                            bcTx.send(SilEvent::AdminMessage(
+                                crate::Events::AdminAction::VotePeriod(period))
+                            );
+                        },
                         Some(unknown) => { println!("Unknown type received from Admin: {unknown}"); },
                         None => { continue; }
                     };

@@ -27,6 +27,7 @@ pub enum AdminAction {
     GamemodeChange(Gamemode),
     Trivia(u16, usize),
     DemocracyVotingPeriod(usize),
+    VotePeriod(usize),
 }
 
 pub enum ServerError {
