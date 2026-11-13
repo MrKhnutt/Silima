@@ -42,15 +42,14 @@ Silima does not require installation or administrator privileges for normal use.
 - ✅ Atomic Client Identity
 - ✅ Per User Voting
 - ✅ Shared State Architecture
-- 🔨 Vote Resolution
+- ⏸️ Vote Resolution
     - ✅ Game Modes
         - ✅ Anarchy
         - ✅ Democracy
     - ⬜ Game Mode Voting
-    - 🔨 Spam Protection
+    - ⏸️ Spam Protection
     - ✅ Polling Behavior Broadcast
-- 🔨 Websocket Lifecycle
-- ⬜ Anonymous IP Binding
+- ⏸️ Websocket Lifecycle
 - 🔨 Vote Resolution
 - ⬜ Networking Controller Binding
 - ✅ Build Hashing and directory manifest
@@ -84,18 +83,20 @@ Silima does not require installation or administrator privileges for normal use.
 
 ### Administration
 
-- ⏸️ Administration Page
+- 🔨 Administration Page
 - ⬜ Lockable Controls
-- ⬜ Game Mode Toggle
+- ✅ Game Mode Toggle
 - ⬜ Theme Selection
 - ⬜ Input Reporting
 - ⬜ Kick-Screen
 - ⬜ Refreshable expiring Join Key
-- ⬜ Logging/Statistics
-- ⬜ Pause/Resume
+- ✅ Pause/Resume
 - ⬜ Game Mode Change Vote Threshold
 - ⬜ Frame-per-Action Toggle
-- ⬜ Config Work
+- 🔨 Config Work
+- 🔨 Behavior Logging
+    - ⬜ Admin Log Pane
+    - ⬜ .log generation to directory
 
 ### Emulation Integration Layer
 
@@ -112,6 +113,7 @@ Silima does not require installation or administrator privileges for normal use.
 
 - ✅ Script to Normalize SVGs
 - ⬜ Run script if icons have changed
+- ⬜ Intergrate script into Rust
 - ⬜ Manually invoke script from build command/admin menu
 - ⬜ SHA256 Checksum generation on releases
 - ⬜ Metadata generation for Windows

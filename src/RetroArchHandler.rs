@@ -14,15 +14,9 @@ use rand::{
         // thread_rng,
 };
 use crate::{
-    JsonHandlers, 
-    Events::{
-        AdminAction, 
-        SilEvent, 
-        Input, 
-        Gamemode,
-        ServerError,
-    },
-    ConfigYaml::GamemodeDefaults,
+    ConfigYaml::GamemodeDefaults, Events::{
+        AdminAction::{self, GamemodeChange}, Gamemode, Input, MessageType, ServerError, SilEvent
+    }, JsonHandlers,
 };
 
 #[derive(serde::Deserialize, Clone)]
@@ -68,6 +62,9 @@ async fn GamemodeParser(
 ){
     let mut bcRx = bcTx.subscribe();
 
+    let mut pauseToggle: bool = false;
+    let mut stateList = [Gamemode::Paused, Gamemode::Paused];
+
     loop { tokio::select! {
         // message recieved received
         Ok(result) = bcRx.recv() => {
@@ -75,7 +72,26 @@ async fn GamemodeParser(
                 SilEvent::AdminMessage(action)       => {
                     match action {
                         AdminAction::GamemodeChange(gm) => {
-                            waTx.send(gm);
+                            if gm == Gamemode::Paused && !pauseToggle {
+                                pauseToggle = true;
+                                stateList[1] = stateList[0];
+                                stateList[0] = gm;
+                                waTx.send(gm);
+                            } else if gm == Gamemode::Paused && pauseToggle {
+                                pauseToggle = false;
+                                // resume previous state
+                                let tempGamestate = stateList[1];
+                                stateList[1] = stateList[0];
+                                stateList[0] = tempGamestate;
+                                waTx.send(tempGamestate);
+                            } else {
+                                stateList[1] = stateList[0];
+                                stateList[0] = gm;
+                                waTx.send(gm);
+                            }
+                            bcTx.send(SilEvent::ServerMessage(MessageType::Info(
+                                format!("gamestate set to {:?}", stateList[0])
+                                .to_string())));
                         }
                         _ => {}
                     }
@@ -113,21 +129,24 @@ async fn gamemode(
         1 => { Gamemode::Anarchy }
         2 => { Gamemode::Paused }
         _ => {
-            bcTx.send(SilEvent::ServerError(
+            bcTx.send(SilEvent::ServerMessage(MessageType::Critical(
                 format!(
                     "unknown initial playstate in YAML file {}", 
                     cfg.gamemodeDefaults.initial_state
                 ).to_string()
-            ));
+            )));
             Gamemode::Paused
         }
     };
-    bcTx.send(SilEvent::ServerError(
+    // bcTx.send(SilEvent::ServerError(
+    bcTx.send(SilEvent::ServerMessage(MessageType::Info(
         format!(
             "initial playstate: {}", 
             cfg.gamemodeDefaults.initial_state
         ).to_string()
-    ));
+    )));
+    
+    bcTx.send(SilEvent::AdminMessage(GamemodeChange(state)));
 
     loop {
     // pause state awaiting gamemode set
@@ -138,6 +157,12 @@ async fn gamemode(
                 }
                 SilEvent::ClientDisconnected(uid)   => {
                     clientVote.remove(&uid);
+                }
+                SilEvent::AdminMessage(AdminAction::VotePeriod(period)) => {
+                    // bcTx.send(SilEvent::ServerError(
+                    bcTx.send(SilEvent::ServerMessage(MessageType::Warning(
+                        format!("Unable to update to {} period in Pause state", period))
+                    ));
                 }
                 _ => {}
             }}
@@ -183,6 +208,15 @@ async fn gamemode(
                         // TODO: check if user is in scope, if not disconnect
                         clientVote.insert(input.clientId, id);
                     }
+                    SilEvent::AdminMessage(AdminAction::VotePeriod(period)) => {
+                        // bcTx.send(SilEvent::ServerError(
+                        bcTx.send(SilEvent::ServerMessage(MessageType::Info(
+                            format!("Democracy polling period updated to {}", period))
+                        ));
+                        deInterval = time::interval(
+                            Duration::from_millis(period as u64)
+                        );
+                    }
                     _ =>{}
                 }
             }
@@ -190,7 +224,9 @@ async fn gamemode(
             _ = deInterval.tick() => {
                 // no users connected
                 if clientVote.is_empty() {
-                    println!("no users");
+                    bcTx.send(SilEvent::ServerMessage(MessageType::Info(
+                                format!("There are no detected users connected for this cycle")
+                                .to_string())));
                     continue;
                 }
                 // collect most voted
@@ -216,19 +252,23 @@ async fn gamemode(
                 v.sort_by_key(|(_,count)| *count * -1);
                 
                 // check for valid inputs
-                if v[0].0 == -1 {
+                while !v.is_empty() && v[0].0 == -1 {
                     // nothing collected at index 0
                     v.remove(0);
                 }
                 if v.is_empty() {
-                    println!("No action selected, idling");
+                    bcTx.send(SilEvent::ServerMessage(MessageType::Info(
+                        format!("No action selected, idling")
+                        .to_string())));
                     continue;
                 }
                 // serialize to proper length
                 let pollcount = cfg.gamemodeDefaults.democracy_defaults.poll_actions;
                 v = v[0..pollcount.min(v.len())].to_vec();
                 let (id, count) = v[0];
-                println!("Voted {} at {} times", id, count);
+                bcTx.send(SilEvent::ServerMessage(MessageType::Info(
+                    format!("Voted {} at {} times", id, count)
+                    .to_string())));
                 // send out poll stats
                 match JsonHandlers::createPollingJson(v.clone()) {
                     Ok(json)    => {
@@ -286,6 +326,12 @@ async fn gamemode(
                         if id != -1 {
                             vote = id;
                     }}
+                    SilEvent::AdminMessage(AdminAction::VotePeriod(period)) => {
+                    // bcTx.send(SilEvent::ServerError(
+                    bcTx.send(SilEvent::ServerMessage(MessageType::Warning(
+                        format!("Unable to update to {} period in Anarchy state", period))
+                    ));
+                }
                     _ =>{}
 
                 }
@@ -330,7 +376,8 @@ pub async fn handleRa (
     let configText = std::fs::read_to_string("./config.yaml")
     .map_err(|e| {
         let msg = format!("YAML find error: {e}");
-        let _ = bcTx.send(SilEvent::ServerError(msg.clone()));
+        // let _ = bcTx.send(SilEvent::ServerError(msg.clone()));
+        bcTx.send(SilEvent::ServerMessage(MessageType::Critical(msg.to_string())));
         eprintln!("{msg}");
         e
     })?;
@@ -339,7 +386,8 @@ pub async fn handleRa (
         yaml_serde::from_str(&configText)
             .map_err(|e| {
                 let msg = format!("YAML parse error: {e}");
-                let _ = bcTx.send(SilEvent::ServerError(msg.clone()));
+                // let _ = bcTx.send(SilEvent::ServerError(msg.clone()));
+                bcTx.send(SilEvent::ServerMessage(MessageType::Critical(msg.clone())));
                 eprintln!("{msg}");
                 e
             })?;
@@ -347,7 +395,8 @@ pub async fn handleRa (
     yamlValue.apply_merge()
         .map_err(|e| {
             let msg = format!("YAML merge error: {e}");
-            let _ = bcTx.send(SilEvent::ServerError(msg.clone()));
+            // let _ = bcTx.send(SilEvent::ServerError(msg.clone()));
+            bcTx.send(SilEvent::ServerMessage(MessageType::Critical(msg.clone())));
             eprintln!("{msg}");
             e
         })?;
@@ -356,7 +405,8 @@ pub async fn handleRa (
         yaml_serde::from_value(yamlValue)
             .map_err(|e| {
                 let msg = format!("YAML config error: {e}");
-                let _ = bcTx.send(SilEvent::ServerError(msg.clone()));
+                // let _ = bcTx.send(SilEvent::ServerError(msg.clone()));
+                bcTx.send(SilEvent::ServerMessage(MessageType::Critical(msg.clone())));
                 eprintln!("{msg}");
                 e
             })?;

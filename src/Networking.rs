@@ -10,11 +10,11 @@ use tokio::{
 };
 use tokio_util::sync::CancellationToken;
 
-use crate::SilEvent;
+use crate::Events::{SilEvent, MessageType};
 // use serde_json::{Value};
 
 /// A simple function that takes in a handler in the style of ```AdminWebsocket::handleClient``` as 
-/// it's main agurement, the websocket is created and handed off to the functional parameter
+/// it's main argument, the websocket is created and handed off to the functional parameter
 pub async fn websocketHandler<FN, FUT>(
     ws: WebSocketUpgrade, 
     bcTx    : broadcast::Sender<SilEvent>,
@@ -28,7 +28,7 @@ pub async fn websocketHandler<FN, FUT>(
             broadcast::Sender<SilEvent>
 ) -> FUT + Send + 'static, 
      FUT: Future<Output = ()> + Send + 'static, {
-    println!("Request Received");
+    bcTx.send(SilEvent::ServerMessage(MessageType::Info("Connection Request Received".to_string())));
     // HTTP request
     ws.on_upgrade(move |ws: WebSocket| {
         handles(

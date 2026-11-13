@@ -40,6 +40,8 @@ const currentPeriod = document.getElementById("current-period");
 const currentWinner = document.getElementById("current-winner");
 
 const toggleVoting = document.getElementById("toggle-voting");
+const setAnarchy = document.getElementById("set-anarchy");
+const setDemocracy = document.getElementById("set-democracy");
 const clearVotes = document.getElementById("clear-votes");
 
 const votingPeriod = document.getElementById("voting-period");
@@ -301,11 +303,37 @@ function sendMessage(message) {
 //    ADMIN CONTROLS
 // ========================= */
 
-// toggleVoting.addEventListener("click", () => {
-//     sendMessage({
-//         type: "toggle_voting"
-//     });
-// });
+setAnarchy.addEventListener("click", () => {
+    sendMessage({
+        type: "vote-state",
+        value: 0
+    });
+    document.getElementById("pause-state").setAttribute("hidden", "true");
+    document.getElementById("status-value").removeAttribute("hidden");
+    document.getElementById("status-value").innerHTML = "Anarchy";
+});
+setDemocracy.addEventListener("click", () => {
+    sendMessage({
+        type: "vote-state",
+        value: 1
+    });
+    document.getElementById("pause-state").setAttribute("hidden", "true");
+    document.getElementById("status-value").removeAttribute("hidden");
+    document.getElementById("status-value").innerHTML = "Democracy";
+});
+toggleVoting.addEventListener("click", () => {
+    sendMessage({
+        type: "vote-state",
+        value: 2
+    });
+    if (document.getElementById("pause-state").getAttribute("hidden") == "true") {
+        document.getElementById("status-value").setAttribute("hidden", "true");
+        document.getElementById("pause-state").removeAttribute("hidden");
+    } else {
+        document.getElementById("pause-state").setAttribute("hidden", "true");
+        document.getElementById("status-value").removeAttribute("hidden");
+    };
+});
 
 // clearVotes.addEventListener("click", () => {
 //     sendMessage({
@@ -313,20 +341,20 @@ function sendMessage(message) {
 //     });
 // });
 
-// applyPeriod.addEventListener("click", () => {
+applyPeriod.addEventListener("click", () => {
 
-//     const period = Number(votingPeriod.value);
+    const period = Number(votingPeriod.value);
 
-//     if (!Number.isFinite(period) || period < 100) {
-//         console.warn("Invalid voting period.");
-//         return;
-//     }
+    if (!Number.isFinite(period) || period < 100) {
+        console.warn("Invalid voting period.");
+        return;
+    }
 
-//     sendMessage({
-//         type: "set_voting_period",
-//         period: period
-//     });
-// });
+    sendMessage({
+        type: "set-voting-period",
+        value: period
+    });
+});
 
 // disconnectClients.addEventListener("click", () => {
 

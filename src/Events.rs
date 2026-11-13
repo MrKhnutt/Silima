@@ -1,3 +1,5 @@
+use axum::extract::ws::Message;
+
 #[derive(Clone)]
 pub struct Input {
     pub clientId    : u16,      ////// Atomic Client Id
@@ -12,11 +14,22 @@ pub enum SilEvent {
     PollUpdate(String),         // JSON string of poll updates
     AdminMessage(AdminAction),  // 
     ClientError(u16, String),   // Client transmitted error from connection
+    ClientMessage(u16, MessageType),
     ServerError(String),        // Server transmitted error
+    ServerMessage(MessageType),
     ShutdownSignal(bool),       // access token canceled
 }
 
-#[derive(PartialEq, Clone, Copy)]
+#[derive(Clone, Debug)]
+pub enum MessageType {
+    Critical(String),
+    Error(String),
+    Warning(String),
+    Info(String),
+    Ping(String),
+}
+
+#[derive(PartialEq, Clone, Copy, Debug)]
 pub enum Gamemode {
     Anarchy,
     Democracy,
@@ -27,6 +40,7 @@ pub enum AdminAction {
     GamemodeChange(Gamemode),
     Trivia(u16, usize),
     DemocracyVotingPeriod(usize),
+    VotePeriod(usize),
 }
 
 pub enum ServerError {

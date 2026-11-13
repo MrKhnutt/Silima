@@ -10,7 +10,7 @@ use futures_util::{SinkExt, StreamExt};
 use tokio_util::sync::CancellationToken;
 use std::sync::atomic::Ordering;
 
-use crate::Input;
+use crate::{Events::MessageType, Input};
 use crate::{
     ATOMIC_ID, 
     JsonHandlers, 
@@ -45,7 +45,9 @@ pub async fn handleClient(
             }
     }};
     let _ = wsSender.send(Message::Text(JsonHandlers::sendVersion().into())).await;
-    println!("Client {userID} connected");
+    bcTx.send(SilEvent::ServerMessage(MessageType::Info(
+        format!("Client {userID} connected")
+        .to_string())));
 
     // begin process loop
     loop{ tokio::select! {
@@ -56,25 +58,33 @@ pub async fn handleClient(
                     let recvJson: Value = match serde_json::from_str(&text) {
                         Ok(text)    => { text }
                         Err(_)      => {
-                            // recieved input could not be recognized
-                            println!("Input recieved from {userID} could not be recognized");
+                            // received input could not be recognized
+                            bcTx.send(SilEvent::ClientMessage(userID, MessageType::Warning(
+                                format!("Input received from {userID} could not be recognized")
+                                .to_string())));
                             continue;
                         }
                     };
-                    println!("Received a {} from {}", recvJson["type"], userID);
+                    bcTx.send(SilEvent::ClientMessage(userID, MessageType::Info(
+                        format!("Received a {} from {}", recvJson["type"], userID)
+                        .to_string())));
 
                     let recvHash: String = recvJson["hash"].to_string();
                     if SILIMA_BUILD_JS_HASH != recvHash {
                         // TODO, inform user client is out of date and dc
-                        println!("Console {userID} is out of date");
+                        bcTx.send(SilEvent::ClientMessage(userID, MessageType::Warning(
+                            format!("Console {userID} is out of date")
+                            .to_string())));
                         // continue;
                     }
 
-                    // match type of recieved information and process
+                    // match type of received information and process
                     let error = match recvJson["type"].as_str() {
                         Some("input") => {
                             // TODO create/implement shared state architecture for channel
-                            println!("sending {}", recvJson["value"].to_string());
+                            bcTx.send(SilEvent::ClientMessage(userID, MessageType::Info(
+                                format!("sending {}", recvJson["value"])
+                                .to_string())));
                             let _ = bcTx.send(SilEvent::Input(Input{
                                 clientId : userID,
                                 input    : recvJson["value"].to_string()
@@ -83,19 +93,22 @@ pub async fn handleClient(
                         }
                         // other input goes here...
                         Some(unknown) => {
-                            println!("Unrecognized type '{unknown} from {userID}");
-                            Err(format!("Unrecognized type '{unknown} from {userID}").to_string())
+                            let e = format!("Unrecognized type '{unknown} from {userID}");
+                            bcTx.send(SilEvent::ClientMessage(userID, MessageType::Error(e.clone())));
+                            Err(e.to_string())
                         }
                         None =>{
-                            println!("No type decoded from client {userID}");
-                            Err(format!("No type decoded from client {userID}").to_string())
+                            let e = format!("No type decoded from client {userID}");
+                            bcTx.send(SilEvent::ClientMessage(userID, MessageType::Error(e.clone())));
+                            Err(e.to_string())
                         }
                     };
                     match error {
                         Ok(_) => {}
                         Err(e) => {
-                            println!("mpsc failed: {e}");
-                            let _ = bcTx.send(SilEvent::ClientError(userID, e));
+                            // println!("mpsc failed: {e}");
+                            // let _ = bcTx.send(SilEvent::ClientError(userID, e));
+                            let _ = bcTx.send(SilEvent::ClientMessage(userID, MessageType::Error(e)));
                         }
                     }
                 }
@@ -106,28 +119,30 @@ pub async fn handleClient(
                 }
 
                 // Any other result
-                Ok(_) => { 
-                    println!("Unexpected message from {userID}"); 
-                    let _ = bcTx.send(SilEvent::ClientError(userID, "Unexpected message".to_string()));
-                    let _ = bcTx.send(SilEvent::ClientDisconnected(userID));
-                    break;
+                Ok(msg) => { 
+                    // println!("Unexpected message from {userID}"); 
+                    // let _ = bcTx.send(SilEvent::ClientError(userID, "Unexpected message".to_string()));
+                    bcTx.send(SilEvent::ClientMessage(
+                        userID, 
+                        MessageType::Warning(format!("Unexpected message from {userID}")))
+                    );
+                    // bcTx.send(SilEvent::ClientDisconnected(userID));
+                    // break;
                 }
                 Err(error) => {
-                    println!("WebSocket error: {error} from {userID}");
-                    let _ = bcTx.send(SilEvent::ClientError(userID, error.to_string()));
-                    let _ = bcTx.send(SilEvent::ClientDisconnected(userID));
+                    // println!("WebSocket error: {error} from {userID}");
+                    // let _ = bcTx.send(SilEvent::ClientError(userID, error.to_string()));
+                    bcTx.send(SilEvent::ClientMessage(
+                        userID, 
+                        MessageType::Error(format!("WebSocket error: {error} from {userID}")))
+                    );
+                    bcTx.send(SilEvent::ClientDisconnected(userID));
                     break;
                 }
             }
         }
         Ok(result) = bcRx.recv() => {
             match result {
-                SilEvent::ClientConnected(_)            => {}
-                SilEvent::ClientDisconnected(_)         => {}
-                SilEvent::Input(_)                      => {}
-                SilEvent::PollUpdate(_)                 => {}
-                SilEvent::AdminMessage(_)               => {}
-                SilEvent::ClientError(_,_)              => {}
                 SilEvent::ShutdownSignal(_)             => {
                     token.cancel();
                     break;

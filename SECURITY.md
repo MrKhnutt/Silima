@@ -8,7 +8,7 @@ Source:
 https://github.com/MrKhnutt/Silima
 
 License:
-TBD
+GPLv3
 
 ## Network Activity
 
