@@ -48,6 +48,12 @@ pub async fn handleClient(
                         Some("shutdown") => { 
                             token.cancel();
                         },
+                        Some("set-voting-period") => {
+                            let period = jsonMsg.get("value").and_then(|v| v.as_u64()).unwrap() as usize;
+                            bcTx.send(SilEvent::AdminMessage(
+                                crate::Events::AdminAction::VotePeriod(period))
+                            );
+                        },
                         Some(unknown) => { println!("Unknown type received from Admin: {unknown}"); },
                         None => { continue; }
                     };

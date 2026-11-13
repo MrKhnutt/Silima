@@ -139,6 +139,11 @@ async fn gamemode(
                 SilEvent::ClientDisconnected(uid)   => {
                     clientVote.remove(&uid);
                 }
+                SilEvent::AdminMessage(AdminAction::VotePeriod(period)) => {
+                    bcTx.send(SilEvent::ServerError(
+                        format!("Unable to update to {} period in Pause state", period))
+                    );
+                }
                 _ => {}
             }}
             _ = waRx.changed() => {
@@ -182,6 +187,14 @@ async fn gamemode(
                         };
                         // TODO: check if user is in scope, if not disconnect
                         clientVote.insert(input.clientId, id);
+                    }
+                    SilEvent::AdminMessage(AdminAction::VotePeriod(period)) => {
+                        bcTx.send(SilEvent::ServerError(
+                            format!("Democracy polling period updated to {}", period))
+                        );
+                        deInterval = time::interval(
+                            Duration::from_millis(period as u64)
+                        );
                     }
                     _ =>{}
                 }
@@ -286,6 +299,11 @@ async fn gamemode(
                         if id != -1 {
                             vote = id;
                     }}
+                    SilEvent::AdminMessage(AdminAction::VotePeriod(period)) => {
+                    bcTx.send(SilEvent::ServerError(
+                        format!("Unable to update to {} period in Anarchy state", period))
+                    );
+                }
                     _ =>{}
 
                 }
