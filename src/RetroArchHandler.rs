@@ -15,7 +15,7 @@ use rand::{
 };
 use crate::{
     ConfigYaml::GamemodeDefaults, Events::{
-        AdminAction::{self, GamemodeChange}, Gamemode, Input, ServerError, SilEvent,MessageType
+        AdminAction::{self, GamemodeChange}, Gamemode, Input, MessageType, ServerError, SilEvent
     }, JsonHandlers,
 };
 
@@ -89,7 +89,9 @@ async fn GamemodeParser(
                                 stateList[0] = gm;
                                 waTx.send(gm);
                             }
-                            println!("gamestate set to {:?}", stateList[0]);
+                            bcTx.send(SilEvent::ServerMessage(MessageType::Info(
+                                format!("gamestate set to {:?}", stateList[0])
+                                .to_string())));
                         }
                         _ => {}
                     }
@@ -222,7 +224,9 @@ async fn gamemode(
             _ = deInterval.tick() => {
                 // no users connected
                 if clientVote.is_empty() {
-                    println!("no users");
+                    bcTx.send(SilEvent::ServerMessage(MessageType::Info(
+                                format!("There are no detected users connected for this cycle")
+                                .to_string())));
                     continue;
                 }
                 // collect most voted
@@ -248,19 +252,23 @@ async fn gamemode(
                 v.sort_by_key(|(_,count)| *count * -1);
                 
                 // check for valid inputs
-                if v[0].0 == -1 {
+                while !v.is_empty() && v[0].0 == -1 {
                     // nothing collected at index 0
                     v.remove(0);
                 }
                 if v.is_empty() {
-                    println!("No action selected, idling");
+                    bcTx.send(SilEvent::ServerMessage(MessageType::Info(
+                        format!("No action selected, idling")
+                        .to_string())));
                     continue;
                 }
                 // serialize to proper length
                 let pollcount = cfg.gamemodeDefaults.democracy_defaults.poll_actions;
                 v = v[0..pollcount.min(v.len())].to_vec();
                 let (id, count) = v[0];
-                println!("Voted {} at {} times", id, count);
+                bcTx.send(SilEvent::ServerMessage(MessageType::Info(
+                    format!("Voted {} at {} times", id, count)
+                    .to_string())));
                 // send out poll stats
                 match JsonHandlers::createPollingJson(v.clone()) {
                     Ok(json)    => {

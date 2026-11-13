@@ -45,7 +45,9 @@ pub async fn handleClient(
             }
     }};
     let _ = wsSender.send(Message::Text(JsonHandlers::sendVersion().into())).await;
-    println!("Client {userID} connected");
+    bcTx.send(SilEvent::ServerMessage(MessageType::Info(
+        format!("Client {userID} connected")
+        .to_string())));
 
     // begin process loop
     loop{ tokio::select! {
@@ -56,25 +58,33 @@ pub async fn handleClient(
                     let recvJson: Value = match serde_json::from_str(&text) {
                         Ok(text)    => { text }
                         Err(_)      => {
-                            // recieved input could not be recognized
-                            println!("Input recieved from {userID} could not be recognized");
+                            // received input could not be recognized
+                            bcTx.send(SilEvent::ClientMessage(userID, MessageType::Warning(
+                                format!("Input received from {userID} could not be recognized")
+                                .to_string())));
                             continue;
                         }
                     };
-                    println!("Received a {} from {}", recvJson["type"], userID);
+                    bcTx.send(SilEvent::ClientMessage(userID, MessageType::Info(
+                        format!("Received a {} from {}", recvJson["type"], userID)
+                        .to_string())));
 
                     let recvHash: String = recvJson["hash"].to_string();
                     if SILIMA_BUILD_JS_HASH != recvHash {
                         // TODO, inform user client is out of date and dc
-                        println!("Console {userID} is out of date");
+                        bcTx.send(SilEvent::ClientMessage(userID, MessageType::Warning(
+                            format!("Console {userID} is out of date")
+                            .to_string())));
                         // continue;
                     }
 
-                    // match type of recieved information and process
+                    // match type of received information and process
                     let error = match recvJson["type"].as_str() {
                         Some("input") => {
                             // TODO create/implement shared state architecture for channel
-                            println!("sending {}", recvJson["value"].to_string());
+                            bcTx.send(SilEvent::ClientMessage(userID, MessageType::Info(
+                                format!("sending {}", recvJson["value"])
+                                .to_string())));
                             let _ = bcTx.send(SilEvent::Input(Input{
                                 clientId : userID,
                                 input    : recvJson["value"].to_string()

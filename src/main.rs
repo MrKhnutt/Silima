@@ -49,7 +49,7 @@ async fn shutdownSignal(
 #[tokio::main] // miso framework
 async fn main() {
 
-    // println!("♦Silima ver {SILIMA_BUILD_VER}:{SILIMA_BUILD_RS_HASH}{SILIMA_BUILD_JS_HASH}");
+    println!("♦Silima ver {SILIMA_BUILD_VER}:{SILIMA_BUILD_RS_HASH}{SILIMA_BUILD_JS_HASH}");
 
     // **IP ADDRESSES**
     let localIp = local_ip().unwrap();

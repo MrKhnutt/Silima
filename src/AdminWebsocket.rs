@@ -14,7 +14,7 @@ use crate::{
     Events::AdminAction::GamemodeChange, SilEvent, Events::MessageType,
 };
 
-/// Creates a websocket that facilitiates connection between the provided webpage
+/// Creates a websocket that facilitates connection between the provided webpage
 /// in ./admin
 /// 
 /// This function is normally provided to ```Networking::websocketHandler``` as the
@@ -31,7 +31,7 @@ pub async fn handleClient(
     ) = socket.split();
     let mut bcRx = bcTx.subscribe();
 
-    println!("Admin connected");
+    bcTx.send(SilEvent::ServerMessage(MessageType::Info("Admin Connected".to_string())));
 
     loop{ tokio::select! {
         Some(result) = wsReceiver.next() => {
@@ -41,7 +41,9 @@ pub async fn handleClient(
                     let jsonMsg: Value = serde_json::from_str(&jsonString).unwrap();
                     // get the type of transmitted message
                     match jsonMsg.get("type").and_then(|v| v.as_str()) {
-                        Some("admin_connected") => { println!("Admin Received") },
+                        Some("admin_connected") => { 
+                                bcTx.send(SilEvent::ServerMessage(MessageType::Info("Admin Received".to_string())));
+                        },
                         Some("shutdown") => { 
                             token.cancel();
                         },
@@ -50,20 +52,34 @@ pub async fn handleClient(
                                 Some(0) => {
                                     bcTx.send(SilEvent::AdminMessage(
                                         GamemodeChange(crate::Events::Gamemode::Anarchy)));
-                                    println!("Setting gamemode to Anarchy");
+                                    bcTx.send(SilEvent::ServerMessage(MessageType::Info(
+                                        "Setting gamemode to Anarchy"
+                                    .to_string())));
                                 }
                                 Some(1) => {
                                     bcTx.send(SilEvent::AdminMessage(
                                         GamemodeChange(crate::Events::Gamemode::Democracy)));
-                                    println!("Setting gamemode to Democracy");
+                                        bcTx.send(SilEvent::ServerMessage(MessageType::Info(
+                                            "Setting gamemode to Democracy"
+                                        .to_string())));
                                 }
                                 Some(2) => {
                                     bcTx.send(SilEvent::AdminMessage(
                                         GamemodeChange(crate::Events::Gamemode::Paused)));
-                                    println!("Toggling Pause State");
+                                    bcTx.send(SilEvent::ServerMessage(MessageType::Info(
+                                        "Toggling Pause State"
+                                    .to_string())));
                                 }
-                                Some(unknown) => { println!("Unknown type received from Admin: {unknown}"); },
-                                None => { println!("Unknown state change recieved from Admin: None")}
+                                Some(unknown) => { 
+                                    bcTx.send(SilEvent::ServerMessage(MessageType::Warning(
+                                        format!("Unknown type \"{unknown}\" received from Admin")
+                                    .to_string())));
+                                },
+                                None => { 
+                                    bcTx.send(SilEvent::ServerMessage(MessageType::Warning(
+                                        "Unknown state change received from Admin: None"
+                                    .to_string())));
+                                },
                             }
                         }
                         Some("set-voting-period") => {
@@ -72,19 +88,27 @@ pub async fn handleClient(
                                 crate::Events::AdminAction::VotePeriod(period))
                             );
                         },
-                        Some(unknown) => { println!("Unknown type received from Admin: {unknown}"); },
+                        Some(unknown) => {
+                            bcTx.send(SilEvent::ServerMessage(MessageType::Warning(
+                                format!("Unknown type \"{unknown}\" received from Admin transmission")
+                            .to_string())));
+                        },
                         None => { continue; }
                     };
                 }
                 Ok(Message::Close(_)) => {
-                    println!("Client disconnected");
+                    bcTx.send(SilEvent::ServerMessage(MessageType::Info(
+                        "Admin Disconnected"
+                        .to_string())));
                     // token.cancel();
                     break;
                 }
                 // Any other result
                 Ok(_) => {}
                 Err(error) => {
-                    println!("WebSocket error: {error}");
+                    bcTx.send(SilEvent::ServerMessage(MessageType::Info(
+                        format!("WebSocket error: {error}")
+                        .to_string())));
                     token.cancel();
                     break;
                 }
