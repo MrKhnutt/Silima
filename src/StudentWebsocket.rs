@@ -51,10 +51,10 @@ pub async fn handleClient(
 
     // begin process loop
     loop{ tokio::select! {
-        Some(result) = wsReceiver.next() => {
+        result = wsReceiver.next() => {
             // decode input from websocket
             match result {
-                Ok(Message::Text(text)) => {
+                Some(Ok(Message::Text(text))) => {
                     let recvJson: Value = match serde_json::from_str(&text) {
                         Ok(text)    => { text }
                         Err(_)      => {
@@ -113,13 +113,13 @@ pub async fn handleClient(
                     }
                 }
 
-                Ok(Message::Close(_)) => {
+                Some(Ok(Message::Close(_))) => {
                     let _ = bcTx.send(SilEvent::ClientDisconnected(userID));
                     break;
                 }
 
                 // Any other result
-                Ok(msg) => { 
+                Some(Ok(msg)) => { 
                     // println!("Unexpected message from {userID}"); 
                     // let _ = bcTx.send(SilEvent::ClientError(userID, "Unexpected message".to_string()));
                     bcTx.send(SilEvent::ClientMessage(
@@ -129,7 +129,7 @@ pub async fn handleClient(
                     // bcTx.send(SilEvent::ClientDisconnected(userID));
                     // break;
                 }
-                Err(error) => {
+                Some(Err(error)) => {
                     // println!("WebSocket error: {error} from {userID}");
                     // let _ = bcTx.send(SilEvent::ClientError(userID, error.to_string()));
                     bcTx.send(SilEvent::ClientMessage(
@@ -139,6 +139,7 @@ pub async fn handleClient(
                     bcTx.send(SilEvent::ClientDisconnected(userID));
                     break;
                 }
+                None => { break; }
             }
         }
         Ok(result) = bcRx.recv() => {
