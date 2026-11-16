@@ -64,6 +64,7 @@ fn createManifest(dir: &str, config: ManifestOptions) -> Result<String, std::io:
         // do nothing
         None => {}
     };
+    fileNames.retain(|file| file != "manifest.json");
     fileNames.sort();
     
     // hash all files
@@ -76,14 +77,17 @@ fn createManifest(dir: &str, config: ManifestOptions) -> Result<String, std::io:
                         fs::File::open(
                             std::path::Path::new(dir).join(file)
                         )?;
+            // file name THEN contents
+            hash.update(file.as_bytes());
             loop {
                 let bytesRead = bytes.read(&mut byteBuffer)?;
-                // file name THEN contents
-                hash.update(file.as_bytes());
-                hash.update(byteBuffer);
+                
+                // EOF
                 if bytesRead == 0 
-                    // EOF
                     { break; }
+                
+                // only active bytes
+                hash.update(&byteBuffer[..bytesRead]);
             };
         };
         // keep 4 characters

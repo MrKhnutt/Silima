@@ -4,7 +4,7 @@ async function hashFiles() {
     let encoder = new TextEncoder();
 
     try {
-        const directory  = await fetch("/manifest.json")
+        const directory  = await fetch("/manifest.json", { cache: "no-store" })
                             .then(response => response.json())
                             .catch(error => {
                                 console.error(error);
@@ -18,7 +18,9 @@ async function hashFiles() {
 
     for (let fileName of data.toSorted()) {
         try {
-            let bytes = new Uint8Array(await (await fetch(fileName)).arrayBuffer());
+            let bytes = new Uint8Array(await (
+                await fetch(fileName, { cache: "no-store" })
+            ).arrayBuffer());
             fileName = fileName.replace(/^\.?\//, "");
             // console.log(fileName);
             hash.update(encoder.encode(fileName));

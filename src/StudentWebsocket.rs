@@ -69,7 +69,7 @@ pub async fn handleClient(
                         format!("Received a {} from {}", recvJson["type"], userID)
                         .to_string())));
 
-                    let recvHash: String = recvJson["hash"].to_string();
+                    let recvHash = recvJson["hash"].as_str().unwrap_or("");
                     if SILIMA_BUILD_JS_HASH != recvHash {
                         // TODO, inform user client is out of date and dc
                         bcTx.send(SilEvent::ClientMessage(userID, MessageType::Warning(
