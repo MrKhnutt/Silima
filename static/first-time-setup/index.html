@@ -6,8 +6,10 @@
 
     <title>Silima Setup</title>
 
-    <link rel="stylesheet" href="./setup.css">
-    <script src="./setup.js" defer></script>
+    <link rel="stylesheet" href="setup.css">
+    <script src="setup.js" defer></script>
+    <script src="/frontend/js/js-sha256.js"></script>
+    <script src="/frontend/js/hashing.js" defer></script>
 </head>
 
 <body>
@@ -19,7 +21,7 @@
         <p class="subtitle">First-Time Setup</p>
     </header>
 
-    <form class="setup-form" method="POST" action="/setup">
+    <form class="setup-form" method="POST" action="/setup" id="setup-form">
 
         <!-- Room Name -->
         <div class="form-group">
@@ -29,7 +31,7 @@
                 type="text"
                 id="room-name"
                 name="room-name"
-                placeholder="computer-science"
+                placeholder="feanor-smithing"
                 pattern="[a-zA-Z0-9](?:[a-zA-Z0-9-]*[a-zA-Z0-9])?"
                 maxlength="63"
                 required
@@ -41,7 +43,7 @@
 
             <p class="address-preview">
                 Address:
-                <code id="address-preview">computer-science.local</code>
+                <code id="address-preview">silima-feanor-smithing.local:42699</code>
             </p>
         </div>
 
@@ -59,7 +61,7 @@
             >
 
             <p class="field-description">
-                Used to access Silima's administrative controls.
+                Used to access Silima's administrative controls.<strong><br>This password is insecurely handled</strong>.
             </p>
         </div>
 
