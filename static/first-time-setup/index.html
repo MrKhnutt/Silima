@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>Silima Setup</title>
+
+    <link rel="stylesheet" href="./setup.css">
+    <script src="./setup.js" defer></script>
+</head>
+
+<body>
+
+<main class="setup-container">
+
+    <header>
+        <h1>Silima</h1>
+        <p class="subtitle">First-Time Setup</p>
+    </header>
+
+    <form class="setup-form" method="POST" action="/setup">
+
+        <!-- Room Name -->
+        <div class="form-group">
+            <label for="room-name">Room Name</label>
+
+            <input
+                type="text"
+                id="room-name"
+                name="room-name"
+                placeholder="computer-science"
+                pattern="[a-zA-Z0-9](?:[a-zA-Z0-9-]*[a-zA-Z0-9])?"
+                maxlength="63"
+                required
+            >
+
+            <p class="field-description">
+                Used to identify this Silima instance on your local network.
+            </p>
+
+            <p class="address-preview">
+                Address:
+                <code id="address-preview">computer-science.local</code>
+            </p>
+        </div>
+
+
+        <!-- Password -->
+        <div class="form-group">
+            <label for="password">Administrator Password</label>
+
+            <input
+                type="password"
+                id="password"
+                name="password"
+                autocomplete="new-password"
+                required
+            >
+
+            <p class="field-description">
+                Used to access Silima's administrative controls.
+            </p>
+        </div>
+
+
+        <!-- Save Location -->
+        <div class="form-group">
+            <label for="save-location">Save Location</label>
+
+            <input
+                type="text"
+                id="save-location"
+                name="save-location"
+                required
+            >
+
+            <p class="field-description">
+                Silima configuration and application data will be stored here.
+            </p>
+        </div>
+
+
+        <!-- License -->
+        <div class="license-box">
+            <label class="checkbox-label">
+                <input
+                    type="checkbox"
+                    id="license"
+                    name="license"
+                    required
+                >
+
+                <span>
+                    I have read and agree to the
+                    <a href="/LICENSE" target="_blank">Silima license</a>.
+                </span>
+            </label>
+        </div>
+        <div class="license-box">
+            <label class="checkbox-label">
+                <input
+                    type="checkbox"
+                    id="security-acknowledgement"
+                    name="security-acknowledgement"
+                    required
+                >
+
+                <span>
+                    I have read and understand the
+                    <a href="/SECURITY.md" target="_blank">Silima Security Guarantees and Limitations</a>.
+                </span>
+            </label>
+        </div>
+
+
+        <button type="submit" class="setup-button">
+            Complete Setup
+        </button>
+
+    </form>
+
+</main>
+
+</body>
+</html>
