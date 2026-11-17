@@ -43,7 +43,7 @@ roomName.addEventListener("input", () => {
     address.textContent =
         name.length > 0
             ? `silima-${name}.local`
-            : "silima-room-name.local";
+            : "silima-feanor.local";
 });
 
 // form transmission
