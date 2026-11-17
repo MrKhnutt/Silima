@@ -1,3 +1,12 @@
+async function hashPassword(password) {
+    let data;
+    const hash = sha256.create();
+    let encoder = new TextEncoder();
+
+    hash.update(encoder.encode(password));
+    return hash.hex();
+}
+
 async function hashFiles() {
     let data;
     const hash = sha256.create();
