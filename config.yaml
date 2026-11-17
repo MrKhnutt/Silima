@@ -1,4 +1,8 @@
 # config.yaml
+administration:
+  name: ""
+  password: ""
+  hash: ""
 
 svg:
   elements:
@@ -12,6 +16,7 @@ svg:
     strip_comments: true
 
 paths:
+  saves: ""
   dir:
     icons: "media/background/"
     pyLibs: "libs"
