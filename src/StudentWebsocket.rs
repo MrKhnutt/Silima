@@ -18,7 +18,7 @@ use crate::{
     SilEvent,
 };
 
-/// Creates a websocket that facilitiates connection between the provided webpage
+/// Creates a websocket that facilitates connection between the provided webpage
 /// in ./admin
 /// 
 /// This function is normally provided to ```Networking::websocketHandler``` as the

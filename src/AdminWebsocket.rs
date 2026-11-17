@@ -18,7 +18,7 @@ use crate::{
 /// in ./admin
 /// 
 /// This function is normally provided to ```Networking::websocketHandler``` as the
-/// handler arguement
+/// handler argument
 pub async fn handleClient(
     socket  : WebSocket, 
     token   : CancellationToken,
