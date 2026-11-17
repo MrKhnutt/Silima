@@ -25,8 +25,9 @@ mod Networking;
 mod AdminWebsocket;
 mod Events;
 mod ConfigYaml;
+mod Initial;
 
-use crate::Events::{SilEvent, Input};
+use crate::{ConfigYaml::{Config, readYaml}, Events::{Input, SilEvent}};
 
 pub const SILIMA_BUILD_RS_HASH: &str = env!("BUILD_SRC_HASH");
 pub const SILIMA_BUILD_JS_HASH: &str = env!("BUILD_CLIENT-CONTROLLER_HASH");
@@ -58,6 +59,25 @@ async fn main() {
 
     let adminAddr = "0.0.0.0";
     let adminPort = "42614";
+
+    // first time setup
+    let mut config: Config;
+    match readYaml() {
+        Ok(config) => {
+            if (
+                config.administration.name.is_empty()       ||
+                config.administration.password.is_empty()   ||
+                config.administration.hash.is_empty()       ||
+                config.paths.saves.is_empty()
+            ) {
+                Initial::initial_Startup().await;
+            }
+        }
+        Err(e) => {
+            // TODO remake file and also startup
+            println!("{e}");
+        }
+    }
 
     println!("Students connect to http://{localIp}:{clientPort}");
     println!("Admin connect to http://{localIp}:{adminPort}");
