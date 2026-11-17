@@ -25,8 +25,8 @@ Silima does not require installation or administrator privileges for normal use.
 ### Currently Working On:
 
 - Administration Tools
-- Backend API
-- Frontend Devolvement with API access
+- Backend API & Logging
+- Networking Integration
 
 ### Suspended:
 
@@ -51,7 +51,6 @@ Silima does not require installation or administrator privileges for normal use.
     - ✅ Polling Behavior Broadcast
 - ⏸️ Websocket Lifecycle
 - 🔨 Vote Resolution
-- ⬜ Networking Controller Binding
 - ✅ Build Hashing and directory manifest
 - ⏸️ Build Sync
 - ⏸️ JS Hash Query Strings for Cache Updates
@@ -69,7 +68,6 @@ Silima does not require installation or administrator privileges for normal use.
     - ⬜ GBC Controller
     - ⬜ N64 Controller
     - ⬜ GBA 
-- ⬜ Clean IP Retrieval
 - ⬜ Map buttons to KeyPress
 
 ### UX
@@ -109,11 +107,17 @@ Silima does not require installation or administrator privileges for normal use.
     - ⬜ Anarchal Trivia
 - ⬜ Emulation Setting Generation
 
+### Network Integration
+
+- ⬜ Network Controller Binding
+- ⬜ mDNS registration
+- ⬜ Administrative Rate Limiting
+
 ### Misc
 
 - ✅ Script to Normalize SVGs
 - ⬜ Run script if icons have changed
-- ⬜ Intergrate script into Rust
+- ⬜ Integrate script into Rust
 - ⬜ Manually invoke script from build command/admin menu
 - ⬜ SHA256 Checksum generation on releases
 - ⬜ Metadata generation for Windows
