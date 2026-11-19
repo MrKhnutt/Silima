@@ -66,7 +66,7 @@ ws.addEventListener("message", (event) => {
     let data = JSON.parse(event.data);
     switch(data.type) {
         case "ok":
-            window.location.href = "/done.html";
+            window.location.href = "done.html";
         case "err":
             alert(data.msg);
         default:

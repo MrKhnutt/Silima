@@ -70,6 +70,7 @@ async fn main() {
                 config.administration.hash.is_empty()       ||
                 config.paths.saves.is_empty()
             ) {
+                println!("Config not setup");
                 Initial::initial_Startup().await;
             }
         }
