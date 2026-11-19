@@ -1,20 +1,21 @@
+use serde::{Deserialize, Serialize};
 use yaml_serde::{Value as yamlValue};
 
-#[derive(serde::Deserialize, Clone)]
+#[derive(serde::Deserialize, Serialize, Clone)]
 #[serde(rename_all = "kebab-case")]
 pub struct AdminOptions {
     pub name    :   String,
     pub password:   String,
     pub hash    :   String,
 }
-#[derive(serde::Deserialize, Clone)]
+#[derive(serde::Deserialize, Serialize, Clone)]
 #[serde(rename_all = "kebab-case")]
 pub struct SVG {
     elements        : yamlValue,
     optimization    : yamlValue,
 }
 
-#[derive(serde::Deserialize, Clone)]
+#[derive(serde::Deserialize, Serialize, Clone)]
 #[serde(rename_all = "kebab-case")]
 pub struct Paths {
     pub saves   : String,
@@ -22,8 +23,7 @@ pub struct Paths {
     pub files   : yamlValue,
 }
 
-#[derive(serde::Deserialize, Clone)]
-// #[derive(serde::Deserialize)]
+#[derive(serde::Deserialize, Serialize, Clone)]
 #[serde(rename_all = "kebab-case")]
 pub struct ServerOptions {
     pub ms_input        : u64,
@@ -33,7 +33,7 @@ pub struct ServerOptions {
     pub paused          : bool,
 }
 
-#[derive(serde::Deserialize, Clone)]
+#[derive(serde::Deserialize, Serialize, Clone)]
 #[serde(rename_all = "kebab-case")]
 pub struct GamemodeDefaults {
     pub democracy_defaults  : ServerOptions,
@@ -43,7 +43,7 @@ pub struct GamemodeDefaults {
     // 0 is democracy, 1 is anarchy, 2 is paused
 }
 
-#[derive(serde::Deserialize, Clone)]
+#[derive(serde::Deserialize, Serialize, Clone)]
 #[serde(rename_all = "kebab-case")]
 pub struct Config {
     pub administration  : AdminOptions,
@@ -83,4 +83,16 @@ pub fn readYaml() -> Result<Config, Box<dyn std::error::Error>> {
             })?;
     Ok(yamlConfig)
 }
+pub fn writeYaml(config: &Config) -> Result<(), String> {
+    let yamlText = yaml_serde::to_string(config)
+        .map_err(|e| {
+            format!("YAML serialization error: {e}")
+        })?;
 
+    std::fs::write(CONFIG_PATH, yamlText)
+        .map_err(|e| {
+            format!("YAML write error: {e}")
+        })?;
+
+    Ok(())
+}
