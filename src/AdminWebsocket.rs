@@ -88,6 +88,12 @@ pub async fn handleClient(
                                 crate::Events::AdminAction::VotePeriod(period))
                             );
                         },
+                        Some("set-broadcast-interval") => {
+                            let period = jsonMsg.get("value").and_then(|v| v.as_u64()).unwrap() as usize;
+                            bcTx.send(SilEvent::AdminMessage(
+                                crate::Events::AdminAction::SetBroadcastInterval(period))
+                            );
+                        }
                         Some(unknown) => {
                             bcTx.send(SilEvent::ServerMessage(MessageType::Warning(
                                 format!("Unknown type \"{unknown}\" received from Admin transmission")

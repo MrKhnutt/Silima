@@ -20,6 +20,7 @@ const ws = new WebSocket(wsAddress);
 const FRAME_RATE = 30;
 const FRAME_TIME = 1000 / FRAME_RATE;
 const BRODCAST_INTERVAL = Math.floor(FRAME_TIME * (2 + Math.random()));
+const MILLIS = 1000;
 
 let userID          = 0;
 let buttonPressed   = null;
@@ -74,19 +75,36 @@ ws.addEventListener("message", (event) => {
         case "version":
              versionUpdate(data.value, CLIENT_HASH_PROMISE);
              break;
+        case "broadcastInterval":
+            setBroadcastInterval(data.value);
+            break;
 
         default:
             console.log("JSON not recognized:", data);
     }
 });
 
-const broadcastInterval = setInterval(() => {
+let broadcastInterval = setInterval(() => {
     if (buttonPressed == null) 
         { return; };
     sendInput(buttonPressed);
     buttonPressed = null;
     return;
 }, BRODCAST_INTERVAL);
+
+function setBroadcastInterval(actions) {
+    const NEW_INTERVAL = 
+        Math.floor((MILLIS / Number(actions)) + (Math.random() - 0.5));
+
+    // update
+    broadcastInterval = setInterval(() => {
+        if (buttonPressed == null)
+            { return; };
+        sendInput(buttonPressed);
+        buttonPressed = null;
+        return;
+    }, NEW_INTERVAL);
+}
 
 function getButtonFromID(id) {
     switch (id) {

@@ -41,6 +41,7 @@ pub enum AdminAction {
     Trivia(u16, usize),
     DemocracyVotingPeriod(usize),
     VotePeriod(usize),
+    SetBroadcastInterval(usize),// set actions permissable per second
 }
 
 pub enum ServerError {
