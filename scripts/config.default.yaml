@@ -1,0 +1,49 @@
+# config.yaml
+administration:
+  name: ""
+  password: ""
+  hash: ""
+
+svg:
+  elements:
+    size: "256"
+    precision: 4
+    color: "#000000"
+    opacity: "1.0"
+
+  optimization:
+    remove_metadata: true
+    strip_comments: true
+
+paths:
+  saves: ""
+  dir:
+    icons: "media/background/"
+    pyLibs: "libs"
+
+  files:
+    manifest: "manifest.json"
+
+server-defaults: &server-defaults
+  ms-input: 17
+  voting-period: 2000
+  poll-actions: 4
+  polling: true
+  paused: false
+
+gamemode-defaults:
+  democracy-defaults:
+    <<: *server-defaults
+
+  anarchy-defaults:
+    <<: *server-defaults
+    polling: false  # pending implementation of circular poll
+    voting period: 8
+
+  pause-defaults:
+    <<: *server-defaults
+    polling: false
+    paused: true
+  initial-state: 0
+  # 0 is democracy, 1 is anarcy, 2 is paused
+

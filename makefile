@@ -35,3 +35,7 @@ usage-distributable:
 			-jobname=FAIRUSE \
 			-outdir="$$build_dir" main.tex; \
 		cp "$$build_dir/FAIRUSE.pdf" ../../Silima-Game-Content-Usage.pdf
+
+# reset config to default
+reset-config:
+	cp scripts/config.default.yaml config.yaml
