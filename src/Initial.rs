@@ -17,7 +17,7 @@ use tower_http::services::ServeDir;
 
 use std::sync::atomic::AtomicU16;
 
-use crate::{ConfigYaml::{Config, readYaml, writeYaml}, JsonHandlers, Networking};
+use crate::{ConfigYaml::{Config, readYaml, writeYaml}, Events, JsonHandlers, Networking};
 
 pub const SILIMA_BUILD_RS_HASH: &str = env!("BUILD_SRC_HASH");
 pub const SILIMA_BUILD_JS_HASH: &str = env!("BUILD_CLIENT-CONTROLLER_HASH");
@@ -120,6 +120,8 @@ pub async fn handleClient(
                     };
                     setConfig.administration.name   = recvJson["room-name"].to_string();
                     setConfig.paths.saves           = recvJson["save-location"].to_string();
+                    setConfig.administration.password 
+                        = Networking::hashPassword(&recvJson["password"].to_string()).unwrap();
 
                     writeYaml(&setConfig);
                     break;
