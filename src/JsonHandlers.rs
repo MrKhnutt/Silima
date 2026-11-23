@@ -44,3 +44,10 @@ pub fn sendVersion() -> std::string::String {
         value: SILIMA_BUILD_VER
     }).unwrap()
 }
+pub fn passwordResponse(status: bool) -> std::string::String {
+    serde_json::to_string( &JsonPackage {
+        r#type: "password-response",
+        msg: "",
+        value: status
+    }).unwrap()
+}

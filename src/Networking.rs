@@ -11,7 +11,7 @@ use tokio::{
 use tokio_util::sync::CancellationToken;
 use argon2::{
     Argon2,
-    password_hash::PasswordHasher,
+    password_hash::{PasswordHasher, PasswordVerifier, phc::PasswordHash},
 };
 
 use crate::Events::{SilEvent, MessageType};
@@ -42,10 +42,25 @@ pub async fn websocketHandler<FN, FUT>(
         )
     })
 }
-pub fn hashPassword(password: &str) -> Result<String, argon2::password_hash::Error> {
+pub fn hashPassword(shaPassword: &str) -> Result<String, argon2::password_hash::Error> {
     let passwordHash = Argon2::default()
-        .hash_password(password.as_bytes())?
+        .hash_password(shaPassword.as_bytes())?
         .to_string();
-
     Ok(passwordHash)
+}
+
+pub fn verifyPassword(
+    receivedHash: &str,
+    storedHash: &str
+) -> bool {
+    let Ok(parsedHash) = PasswordHash::new(storedHash) else {
+        return false;
+    };
+
+    Argon2::default()
+        .verify_password(
+            receivedHash.as_bytes(),
+            &parsedHash,
+        )
+        .is_ok()
 }

@@ -11,7 +11,7 @@ use tokio_util::sync::CancellationToken;
 
 // use crate::Input;
 use crate::{
-    Events::AdminAction::GamemodeChange, SilEvent, Events::MessageType,
+    ConfigYaml, Events::{AdminAction::GamemodeChange, MessageType}, JsonHandlers, Networking::{self, hashPassword}, SilEvent
 };
 
 /// Creates a websocket that facilitates connection between the provided webpage
@@ -30,10 +30,78 @@ pub async fn handleClient(
         mut wsReceiver    // Messages FROM the admin
     ) = socket.split();
     let mut bcRx = bcTx.subscribe();
+    let mut verified: bool = false;
 
     bcTx.send(SilEvent::ServerMessage(MessageType::Info("Admin Connected".to_string())));
 
-    loop{ tokio::select! {
+    loop{ 
+        if !verified { tokio::select! {
+        result = wsReceiver.next() => {
+            match result {
+                Some(Ok(Message::Text(jsonString))) => {
+                    let recvJson: Value = match serde_json::from_str(&jsonString) {
+                        Ok(text)    => { text }
+                        Err(_)      => {
+                            // log error TODO
+                            continue;
+                        }
+                    };
+                    match recvJson["type"].as_str() {
+                        Some("password-request") => {
+                            // put the password thru argon
+                            let sha = match recvJson.get("value").and_then(
+                                    |v| v.as_str()
+                                ) {
+                                    None => {
+                                        println!("None");
+                                        "Null"
+                                    },
+                                    Some(x) => { x }
+                                };
+                            // we should've verified config earlier, so we just grab it
+                            let storedHash = ConfigYaml::readYaml().unwrap().administration.password;
+                            
+                            if Networking::verifyPassword(sha, &storedHash) {
+                                verified = true;
+                                wsSender.send(Message::Text(
+                                    JsonHandlers::passwordResponse(true).into()
+                                )).await;
+                            } else {
+                                wsSender.send(Message::Text(
+                                    JsonHandlers::passwordResponse(false).into()
+                                )).await;
+                            }
+                        },
+                        Some("admin_connected") => { 
+                                bcTx.send(SilEvent::ServerMessage(MessageType::Info("Admin Received".to_string())));
+                        },
+                        Some(unknown) => {
+                                bcTx.send(SilEvent::ServerMessage(MessageType::Warning(
+                                    format!("Unknown type \"{unknown}\" received from Admin transmission prior password")
+                                .to_string())));
+                            },
+                        None => { continue; }
+                    }
+                }
+                Some(Ok(Message::Close(_))) => {
+                    break;
+                }
+                // Any other result
+                Some(Ok(msg)) => { 
+                    // break;
+                }
+                Some(Err(error)) => {
+                    break;
+                }
+                None => { break; }
+            }
+        },
+        _ = token.cancelled() => {
+            break;
+        }
+    }
+
+    } else { tokio::select! {
         Some(result) = wsReceiver.next() => {
             match result {
                 Ok(Message::Text(jsonString)) => {
@@ -41,9 +109,6 @@ pub async fn handleClient(
                     let jsonMsg: Value = serde_json::from_str(&jsonString).unwrap();
                     // get the type of transmitted message
                     match jsonMsg.get("type").and_then(|v| v.as_str()) {
-                        Some("admin_connected") => { 
-                                bcTx.send(SilEvent::ServerMessage(MessageType::Info("Admin Received".to_string())));
-                        },
                         Some("shutdown") => { 
                             token.cancel();
                         },
@@ -176,6 +241,7 @@ pub async fn handleClient(
         _ = token.cancelled() => {
             break;
         }
+    }
     }}
 }
 
