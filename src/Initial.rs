@@ -121,7 +121,12 @@ pub async fn handleClient(
                     setConfig.administration.name   = recvJson["room-name"].to_string();
                     setConfig.paths.saves           = recvJson["save-location"].to_string();
                     setConfig.administration.password 
-                        = Networking::hashPassword(&recvJson["password"].to_string()).unwrap();
+                        = Networking::hashPassword(
+                            &recvJson["password"]
+                                .as_str()
+                                .unwrap_or("")
+                                .to_string()
+                            ).unwrap();
 
                     writeYaml(&setConfig);
                     break;
