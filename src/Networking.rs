@@ -9,6 +9,10 @@ use tokio::{
     sync::{broadcast},
 };
 use tokio_util::sync::CancellationToken;
+use argon2::{
+    Argon2,
+    password_hash::PasswordHasher,
+};
 
 use crate::Events::{SilEvent, MessageType};
 // use serde_json::{Value};
@@ -37,4 +41,11 @@ pub async fn websocketHandler<FN, FUT>(
             bcTx        // broadcast channel
         )
     })
+}
+pub fn hashPassword(password: &str) -> Result<String, argon2::password_hash::Error> {
+    let passwordHash = Argon2::default()
+        .hash_password(password.as_bytes())?
+        .to_string();
+
+    Ok(passwordHash)
 }
