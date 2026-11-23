@@ -6,11 +6,41 @@
 
     <title>Silima Admin</title>
 
-    <link rel="stylesheet" href="admin.css">
+    <link rel="stylesheet" href="admin.css" defer>
+
+    <!-- <style>
+        dialog::backdrop {
+            background: rgba(0, 0, 0, 0.8);
+        }
+    </style> -->
+
+    <script src="/frontend/js/js-sha256.js" defer></script>
+    <script src="/frontend/js/hashing.js" defer></script>
+
     <link rel="icon" href="/media/logo/icons/silimaColor.ico">
 </head>
 
 <body>
+    
+    <dialog id="password-dialog">
+        <form id="password-form">
+            <h2>Administrator Login</h2>
+
+            <label for="admin-password">Password</label>
+
+            <input
+                type="password"
+                id="admin-password"
+                autocomplete="current-password"
+                required
+                autofocus
+            >
+
+            <p id="password-error"></p>
+
+            <button type="submit">Unlock</button>
+        </form>
+    </dialog>
 
     <header class="topbar">
         <div>
@@ -303,6 +333,6 @@
 
 </body>
 
-<script src="admin.js"></script>
+<script src="admin.js" defer></script>
 
 </html>

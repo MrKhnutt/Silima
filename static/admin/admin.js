@@ -50,6 +50,19 @@ const applyPeriod = document.getElementById("apply-period");
 const disconnectClients = document.getElementById("disconnect-clients");
 const shutdownServer = document.getElementById("shutdown-server");
 
+const passwordDialog = document.getElementById("password-dialog");
+const passwordForm   = document.getElementById("password-form");
+const passwordInput  = document.getElementById("admin-password");
+const passwordError  = document.getElementById("password-error");
+
+/* =========================
+   PAGE LOADER
+========================= */
+
+window.addEventListener("load", () => {
+
+    passwordDialog.showModal();
+});
 
 /* =========================
    WEBSOCKET
@@ -102,13 +115,8 @@ socket.addEventListener("error", (error) => {
 });
 
 socket.addEventListener("message", (event) => {
-    try {
-        const message = JSON.parse(event.data);
-        handleServerMessage(message);
-    }
-    catch (error) {
-        console.error("Invalid server message:", event.data);
-    }
+    const message = JSON.parse(event.data);
+    handleServerMessage(message);
 });
 
 
@@ -116,60 +124,25 @@ socket.addEventListener("message", (event) => {
    SERVER MESSAGE HANDLER
 ========================= */
 
-// function handleServerMessage(message) {
+function handleServerMessage(message) {
 
-//     switch (message.type) {
-
-//         case "client_count":
-//             studentCount.textContent = message.count;
-//             break;
-
-
-//         case "retroarch_status":
-//             setStatus(
-//                 retroarchStatusLight,
-//                 retroarchStatus,
-//                 message.connected,
-//                 message.connected ? "Connected" : "Disconnected"
-//             );
-//             break;
-
-
-//         case "voting_status":
-//             updateVotingStatus(message.active);
-//             break;
-
-
-//         case "voting_period":
-//             currentPeriod.textContent = message.period;
-
-//             // Only update the input if the teacher isn't currently editing it.
-//             if (document.activeElement !== votingPeriod) {
-//                 votingPeriod.value = message.period;
-//             }
-
-//             break;
-
-
-//         case "vote_update":
-//             updateVotes(message.votes);
-//             break;
-
-
-//         case "winner":
-//             currentWinner.textContent = message.input ?? "None";
-//             break;
-
-
-//         case "state":
-//             updateFullState(message);
-//             break;
-
-
-//         default:
-//             console.warn("Unknown server message:", message);
-//     }
-// }
+    switch (message.type) {
+        case "password-response":
+            if (Boolean(message.value)) {
+                passwordDialog.close();
+                passwordInput.value = "";
+                passwordError.textContent = "";
+            }
+            else {
+                passwordError.textContent = "Incorrect password.";
+                passwordInput.select();
+                console.log("incorrect password")
+            }
+            break;
+        default:
+            console.log("invalid message received: ", message.type);
+        }
+}
 
 /* =========================
    FULL STATE UPDATE
@@ -392,3 +365,36 @@ shutdownServer.addEventListener("click", () => {
 //         });
 //     });
 // });
+
+/* =========================
+    PASSWORD
+========================= */
+
+passwordForm.addEventListener("submit", async (event) => {
+    event.preventDefault();
+
+    const password = await hashPassword(passwordInput.value);
+
+    console.log(passwordInput.value);
+    console.log(password);
+
+    sendMessage({
+        type: "password-request",
+        value: String(password)
+    });
+    //     if (response.ok) {
+    //         passwordDialog.close();
+    //         passwordInput.value = "";
+    //         passwordError.textContent = "";
+    //     }
+    //     else {
+    //         passwordError.textContent = "Incorrect password.";
+    //         passwordInput.select();
+    //     }
+    // }
+    // catch (err) {
+    //     passwordError.textContent = "Unable to contact Silima.";
+    //     console.error(err);
+    // }
+});
+
