@@ -67,7 +67,6 @@ async fn main() {
             if (
                 config.administration.name.is_empty()       ||
                 config.administration.password.is_empty()   ||
-                config.administration.hash.is_empty()       ||
                 config.paths.saves.is_empty()
             ) {
                 println!("Config not setup");

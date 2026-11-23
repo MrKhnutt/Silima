@@ -6,7 +6,6 @@ use yaml_serde::{Value as yamlValue};
 pub struct AdminOptions {
     pub name    :   String,
     pub password:   String,
-    pub hash    :   String,
 }
 #[derive(serde::Deserialize, Serialize, Clone)]
 #[serde(rename_all = "kebab-case")]
