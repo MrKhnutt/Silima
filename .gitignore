@@ -15,4 +15,4 @@ documentation/**/*.log
 documentation/**/*.aux
 documentation/**/*.fdb_latexmk
 *.pdf
-config.yaml
+/config.yaml
